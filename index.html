@@ -1,0 +1,1377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IP &amp; Domain Reputation Dashboard — 2026-05-19 09:05:44 UTC</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; }
+
+    .header { background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%); padding: 2rem; border-bottom: 1px solid #1e293b; }
+    .header h1 { font-size: 1.75rem; font-weight: 700; color: #f1f5f9; }
+    .header .subtitle { color: #94a3b8; font-size: 0.9rem; margin-top: 0.25rem; }
+
+    .summary-bar { display: flex; gap: 1rem; padding: 1.5rem 2rem; background: #0f172a; flex-wrap: wrap; }
+    .stat-card { flex: 1; min-width: 130px; background: #1e293b; border-radius: 12px; padding: 1.2rem 1.5rem; border: 1px solid #334155; }
+    .stat-card .stat-val { font-size: 2rem; font-weight: 700; line-height: 1; }
+    .stat-card .stat-label { font-size: 0.75rem; color: #94a3b8; margin-top: 0.3rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .stat-total .stat-val  { color: #60a5fa; }
+    .stat-clean .stat-val  { color: #22c55e; }
+    .stat-warn .stat-val   { color: #f59e0b; }
+    .stat-danger .stat-val { color: #ef4444; }
+
+    /* Section dividers */
+    .section-divider { display: flex; align-items: center; gap: 1rem; padding: 1.5rem 2rem 0.5rem; }
+    .section-divider h2 { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #475569; white-space: nowrap; }
+    .section-divider::after { content: ""; flex: 1; height: 1px; background: #1e293b; }
+
+    /* Pool nav */
+    .pool-nav { display: flex; gap: 0.5rem; padding: 0.4rem 2rem 0.75rem; flex-wrap: wrap; align-items: center; }
+    .pool-nav-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; margin-right: 0.25rem; white-space: nowrap; }
+    .nav-pool { display: flex; align-items: center; gap: 0.35rem; padding: 0.25rem 0.7rem; border-radius: 999px; font-size: 0.78rem; font-weight: 600; text-decoration: none; background: #0f172a; border: 1px solid #334155; color: #cbd5e1; }
+    .nav-pool:hover { border-color: #60a5fa; color: #60a5fa; }
+    .nav-count { background: #334155; border-radius: 999px; font-size: 0.62rem; padding: 0.05rem 0.35rem; color: #94a3b8; }
+
+    /* Nav rows */
+    .nav-row { background: #1e293b; border-bottom: 1px solid #334155; }
+
+    .content { padding: 2rem; display: flex; flex-direction: column; gap: 2.5rem; max-width: 1100px; margin: 0 auto; }
+
+    /* Pool section */
+    .pool-section { display: flex; flex-direction: column; gap: 1rem; }
+    .pool-header { background: #162032; border: 1px solid #1e3a5f; border-radius: 12px; padding: 1.25rem 1.5rem; }
+    .pool-title-row { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.6rem; flex-wrap: wrap; }
+    .pool-name { font-size: 1.2rem; font-weight: 700; color: #f1f5f9; }
+    .pool-score-chip { padding: 0.2rem 0.75rem; border-radius: 999px; font-size: 0.78rem; font-weight: 700; border: 1.5px solid var(--pc); color: var(--pc); background: #0f172a; }
+    .pool-stats { font-size: 0.8rem; color: #94a3b8; display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+    .ps-sep { color: #334155; }
+    .ps-clean  { color: #22c55e; }
+    .ps-warn   { color: #f59e0b; }
+    .ps-danger { color: #ef4444; }
+    .pool-cards { display: flex; flex-direction: column; gap: 0.875rem; }
+
+    /* Cards */
+    .ip-card { background: #1e293b; border-radius: 14px; border: 1px solid #334155; overflow: hidden; }
+    .domain-card { border-color: #1e3a5f; }
+    .ip-card-header { display: flex; justify-content: space-between; align-items: center; padding: 1.1rem 1.5rem; background: #162032; border-bottom: 1px solid #334155; flex-wrap: wrap; gap: 0.75rem; }
+    .domain-card .ip-card-header { border-bottom-color: #1e3a5f; }
+    .ip-title { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+    .ip-address { font-family: monospace; font-size: 1.2rem; font-weight: 700; color: #f1f5f9; }
+    .domain-name { font-size: 1.1rem; }
+
+    .badge { padding: 0.2rem 0.6rem; border-radius: 999px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+    .badge-clean   { background: #052e16; color: #22c55e; border: 1px solid #166534; }
+    .badge-warning { background: #1c1009; color: #f59e0b; border: 1px solid #78350f; }
+    .badge-danger  { background: #1a0505; color: #ef4444; border: 1px solid #7f1d1d; }
+    .pool-badge { padding: 0.15rem 0.6rem; border-radius: 999px; font-size: 0.7rem; font-weight: 500; background: #0f172a; border: 1px solid #334155; color: #94a3b8; }
+    .pool-unlabeled { color: #475569; border-color: #1e293b; }
+
+    .score-ring { text-align: center; background: #0f172a; border-radius: 10px; padding: 0.6rem 1rem; border: 2px solid var(--score-color); }
+    .score-number { font-size: 1.5rem; font-weight: 800; color: var(--score-color); display: block; line-height: 1; }
+    .score-label  { font-size: 0.65rem; color: #94a3b8; }
+
+    .ip-meta { display: flex; flex-wrap: wrap; border-bottom: 1px solid #334155; }
+    .domain-card .ip-meta { border-bottom-color: #1e3a5f; }
+    .meta-item { flex: 1; min-width: 200px; padding: 0.8rem 1.5rem; border-right: 1px solid #334155; }
+    .meta-item:last-child { border-right: none; }
+    .meta-key { display: block; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; margin-bottom: 0.2rem; }
+    .meta-val { font-size: 0.85rem; color: #cbd5e1; }
+
+    /* Listing alert */
+    .listing-alert { margin: 1rem 1.5rem 0; background: #1a0505; border: 1px solid #7f1d1d; border-left: 4px solid #ef4444; border-radius: 8px; padding: 0.875rem 1.25rem; }
+    .listing-alert strong { color: #ef4444; display: block; margin-bottom: 0.4rem; font-size: 0.85rem; }
+    .listing-alert ul { list-style: none; display: flex; flex-direction: column; gap: 0.25rem; }
+    .listing-alert li { font-size: 0.82rem; color: #fca5a5; }
+    .bl-name { font-weight: 600; }
+    .bl-cat  { color: #94a3b8; }
+
+    /* VirusTotal panel */
+    .vt-panel { margin: 1rem 1.5rem 0; background: #0f1e35; border: 1px solid #1e3a5f; border-left: 4px solid #3b82f6; border-radius: 8px; padding: 0.875rem 1.25rem; }
+    .vt-panel.vt-error { color: #94a3b8; font-size: 0.82rem; }
+    .vt-header { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 0.6rem; }
+    .vt-logo { font-weight: 700; font-size: 0.82rem; color: #60a5fa; letter-spacing: 0.02em; }
+    .vt-meta { font-size: 0.72rem; color: #64748b; }
+    .vt-rep  { font-size: 0.78rem; font-weight: 600; margin-left: auto; }
+    .vt-bar  { display: flex; height: 9px; border-radius: 999px; overflow: hidden; background: #1e293b; margin-bottom: 0.4rem; }
+    .vt-seg  { height: 100%; }
+    .vt-mal  { background: #ef4444; }
+    .vt-sus  { background: #f97316; }
+    .vt-har  { background: #22c55e; }
+    .vt-und  { background: #334155; }
+    .vt-legend { font-size: 0.7rem; color: #94a3b8; display: flex; flex-wrap: wrap; gap: 0 0.5rem; }
+    .vt-cats { font-size: 0.72rem; color: #64748b; margin-top: 0.4rem; }
+    .vt-cats span { color: #94a3b8; }
+    .leg-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 3px; vertical-align: middle; }
+    .leg-mal { background: #ef4444; }
+    .leg-sus { background: #f97316; }
+    .leg-har { background: #22c55e; }
+    .leg-und { background: #334155; }
+    .vt-flagged-details { margin-top: 0.6rem; }
+    .vt-flagged-details summary { cursor: pointer; color: #93c5fd; font-size: 0.78rem; padding: 0.2rem 0; user-select: none; }
+    .vt-flagged-details summary:hover { color: #bfdbfe; }
+    .vt-flagged-table { width: 100%; border-collapse: collapse; margin-top: 0.4rem; font-size: 0.76rem; }
+    .vt-flagged-table th { text-align: left; color: #64748b; font-weight: 600; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.25rem 0.5rem; border-bottom: 1px solid #1e3a5f; }
+    .vt-flagged-table td { padding: 0.25rem 0.5rem; border-bottom: 1px solid #0f1e35; }
+    .vt-engine { color: #cbd5e1; font-weight: 500; }
+    .vt-cat-mal { color: #ef4444; font-weight: 600; }
+    .vt-cat-sus { color: #f97316; font-weight: 600; }
+    .vt-result-label { color: #94a3b8; font-style: italic; }
+
+    /* DNSBL expand */
+    .dnsbl-details { margin: 1rem 1.5rem 1.25rem; }
+    .dnsbl-details summary { cursor: pointer; color: #60a5fa; font-size: 0.82rem; padding: 0.4rem 0; user-select: none; }
+    .dnsbl-details summary:hover { color: #93c5fd; }
+    .dnsbl-table { width: 100%; border-collapse: collapse; margin-top: 0.6rem; font-size: 0.79rem; }
+    .dnsbl-table th { text-align: left; color: #64748b; font-weight: 600; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.35rem 0.5rem; border-bottom: 1px solid #334155; }
+    .dnsbl-table td { padding: 0.35rem 0.5rem; border-bottom: 1px solid #1e293b; }
+    .listed-row { background: #1a0505; }
+    .listed-row td { color: #fca5a5; }
+    .listed-text { color: #ef4444 !important; font-weight: 600; }
+    .clean-text { color: #4ade80; }
+    .error-text { color: #94a3b8; font-style: italic; }
+    .error-row td { color: #64748b; }
+    .response { background: #0f172a; padding: 0.1rem 0.35rem; border-radius: 4px; font-size: 0.72rem; }
+
+    .footer { text-align: center; padding: 2rem; color: #475569; font-size: 0.8rem; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🛡 IP &amp; Domain Reputation Dashboard</h1>
+  <div class="subtitle">Generated 2026-05-19 09:05:44 UTC &nbsp;·&nbsp; Sources: DNSBL/SURBL/URIBL + VirusTotal + ip-api.com</div>
+</div>
+
+<div class="summary-bar">
+  <div class="stat-card stat-total"><div class="stat-val">24</div><div class="stat-label">Total Checked</div></div>
+  <div class="stat-card stat-clean"><div class="stat-val">20</div><div class="stat-label">Clean</div></div>
+  <div class="stat-card stat-warn"><div class="stat-val">2</div><div class="stat-label">Warning</div></div>
+  <div class="stat-card stat-danger"><div class="stat-val">2</div><div class="stat-label">Blacklisted</div></div>
+</div>
+
+<div class="section-divider" style="background:#0f172a; padding-top:1.5rem;">
+  <h2>Domains (24)</h2>
+</div>
+<div class="nav-row">
+  <div class="pool-nav">
+    <span class="pool-nav-label">Jump to:</span>
+    <a href="#domain-pool-0" class="nav-pool">ConvertKit Mail <span class="nav-count">12</span></a><a href="#domain-pool-1" class="nav-pool">Kit Mail <span class="nav-count">12</span></a>
+  </div>
+</div>
+
+<div class="section-divider" style="background:#0f172a; padding-top:0.75rem;">
+  <h2>IP Pools (0 IPs)</h2>
+</div>
+<div class="nav-row">
+  <div class="pool-nav">
+    <span class="pool-nav-label">Jump to:</span>
+    
+  </div>
+</div>
+
+<div class="content">
+  <div id="domains-section" style="display:flex;flex-direction:column;gap:2.5rem;">
+    
+<div class="pool-section" id="domain-pool-0">
+  <div class="pool-header">
+    <div class="pool-title-row">
+      <h2 class="pool-name">ConvertKit Mail</h2>
+      <div class="pool-score-chip" style="--pc:#22c55e">Avg 100/100</div>
+    </div>
+    <div class="pool-stats">
+      <span class="ps-total">12 domains</span>
+      <span class="ps-sep">·</span>
+      <span class="ps-clean">✅ 9 clean</span>
+      <span class="ps-sep">·</span>
+      <span class="ps-warn">⚠ 2 warning</span>
+      <span class="ps-sep">·</span>
+      <span class="ps-danger">🔴 1 blacklisted</span>
+    </div>
+  </div>
+  <div class="pool-cards">
+<div class="ip-card domain-card" id="domain-pool0-0">
+  <div class="ip-card-header">
+    <div class="ip-title">
+      <span class="ip-address domain-name">convertkit-mail.com</span>
+      <span class="badge badge-clean">Clean</span>
+      <span class="pool-badge">ConvertKit Mail</span>
+    </div>
+    <div class="score-ring" style="--score-color:#22c55e;">
+      <span class="score-number">100</span>
+      <span class="score-label">/ 100</span>
+    </div>
+  </div>
+  <div class="ip-meta">
+    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 10 clean &nbsp;·&nbsp; 12 total</span></div>
+  </div>
+  
+  
+<div class="vt-panel">
+  <div class="vt-header">
+    <span class="vt-logo">VirusTotal</span>
+    <span class="vt-meta">92 engines &nbsp;·&nbsp; Last scanned 2026-05-17</span>
+    <span class="vt-rep" style="color:#ef4444">Community score: -2</span>
+  </div>
+  <div class="vt-bar-wrap">
+    <div class="vt-bar">
+      <div class="vt-seg vt-mal" style="width:0%"></div>
+      <div class="vt-seg vt-sus" style="width:0%"></div>
+      <div class="vt-seg vt-har" style="width:65%"></div>
+      <div class="vt-seg vt-und" style="width:35%"></div>
+    </div>
+    <div class="vt-legend">
+      <span class="leg-dot leg-mal"></span>0 malicious &nbsp;
+      <span class="leg-dot leg-sus"></span>0 suspicious &nbsp;
+      <span class="leg-dot leg-har"></span>60 harmless &nbsp;
+      <span class="leg-dot leg-und"></span>32 undetected
+    </div>
+  </div>
+  <div class="vt-cats">Categories: <span>misc, general business, web and email marketing</span></div>
+  
+</div>
+  <details class="dnsbl-details">
+    <summary>Show all 12 domain blacklist results</summary>
+    <table class="dnsbl-table">
+      <thead><tr><th></th><th>Blacklist</th><th>Category</th><th>Result</th></tr></thead>
+      <tbody><tr class="clean-row"><td>✅</td><td>0Spam Domain</td><td>0Spam</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Credit (CR)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Malware (MW)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>SURBL Multi</td><td>SURBL</td><td class="error-text">Error: All nameservers failed to answer the query convertkit-mail.c</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Phish (PH)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Spam (SC)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="error-text">Error: blocked/open-resolver (127.255.255.254)</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Black</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Grey</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Multi</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Red</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
+    </table>
+  </details>
+</div>
+<div class="ip-card domain-card" id="domain-pool0-1">
+  <div class="ip-card-header">
+    <div class="ip-title">
+      <span class="ip-address domain-name">click.convertkit-mail.com</span>
+      <span class="badge badge-clean">Clean</span>
+      <span class="pool-badge">ConvertKit Mail</span>
+    </div>
+    <div class="score-ring" style="--score-color:#22c55e;">
+      <span class="score-number">100</span>
+      <span class="score-label">/ 100</span>
+    </div>
+  </div>
+  <div class="ip-meta">
+    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 10 clean &nbsp;·&nbsp; 12 total</span></div>
+  </div>
+  
+  
+<div class="vt-panel">
+  <div class="vt-header">
+    <span class="vt-logo">VirusTotal</span>
+    <span class="vt-meta">92 engines &nbsp;·&nbsp; Last scanned 2026-05-18</span>
+    <span class="vt-rep" style="color:#22c55e">Community score: +1</span>
+  </div>
+  <div class="vt-bar-wrap">
+    <div class="vt-bar">
+      <div class="vt-seg vt-mal" style="width:0%"></div>
+      <div class="vt-seg vt-sus" style="width:0%"></div>
+      <div class="vt-seg vt-har" style="width:64%"></div>
+      <div class="vt-seg vt-und" style="width:36%"></div>
+    </div>
+    <div class="vt-legend">
+      <span class="leg-dot leg-mal"></span>0 malicious &nbsp;
+      <span class="leg-dot leg-sus"></span>0 suspicious &nbsp;
+      <span class="leg-dot leg-har"></span>59 harmless &nbsp;
+      <span class="leg-dot leg-und"></span>33 undetected
+    </div>
+  </div>
+  
+  
+</div>
+  <details class="dnsbl-details">
+    <summary>Show all 12 domain blacklist results</summary>
+    <table class="dnsbl-table">
+      <thead><tr><th></th><th>Blacklist</th><th>Category</th><th>Result</th></tr></thead>
+      <tbody><tr class="clean-row"><td>✅</td><td>0Spam Domain</td><td>0Spam</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Credit (CR)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Malware (MW)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>SURBL Multi</td><td>SURBL</td><td class="error-text">Error: All nameservers failed to answer the query click.convertkit-</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Phish (PH)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Spam (SC)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="error-text">Error: blocked/open-resolver (127.255.255.254)</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Black</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Grey</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Multi</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Red</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
+    </table>
+  </details>
+</div>
+<div class="ip-card domain-card" id="domain-pool0-2">
+  <div class="ip-card-header">
+    <div class="ip-title">
+      <span class="ip-address domain-name">convertkit-mail2.com</span>
+      <span class="badge badge-warning">Warning</span>
+      <span class="pool-badge">ConvertKit Mail</span>
+    </div>
+    <div class="score-ring" style="--score-color:#22c55e;">
+      <span class="score-number">100</span>
+      <span class="score-label">/ 100</span>
+    </div>
+  </div>
+  <div class="ip-meta">
+    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 8 clean &nbsp;·&nbsp; 12 total</span></div>
+  </div>
+  
+  
+<div class="vt-panel">
+  <div class="vt-header">
+    <span class="vt-logo">VirusTotal</span>
+    <span class="vt-meta">92 engines &nbsp;·&nbsp; Last scanned 2026-05-14</span>
+    <span class="vt-rep" style="color:#ef4444">Community score: -2</span>
+  </div>
+  <div class="vt-bar-wrap">
+    <div class="vt-bar">
+      <div class="vt-seg vt-mal" style="width:0%"></div>
+      <div class="vt-seg vt-sus" style="width:1%"></div>
+      <div class="vt-seg vt-har" style="width:64%"></div>
+      <div class="vt-seg vt-und" style="width:35%"></div>
+    </div>
+    <div class="vt-legend">
+      <span class="leg-dot leg-mal"></span>0 malicious &nbsp;
+      <span class="leg-dot leg-sus"></span>1 suspicious &nbsp;
+      <span class="leg-dot leg-har"></span>59 harmless &nbsp;
+      <span class="leg-dot leg-und"></span>32 undetected
+    </div>
+  </div>
+  <div class="vt-cats">Categories: <span>misc, information technology, business and economy</span></div>
+  <details class="vt-flagged-details"><summary>Show 1 flagging engine(s)</summary><table class="vt-flagged-table"><thead><tr><th>Engine</th><th>Category</th><th>Detection</th></tr></thead><tbody><tr><td class="vt-engine">Forcepoint ThreatSeeker</td><td class='vt-cat-sus'>Suspicious</td><td class="vt-result-label">spam</td></tr></tbody></table></details>
+</div>
+  <details class="dnsbl-details">
+    <summary>Show all 12 domain blacklist results</summary>
+    <table class="dnsbl-table">
+      <thead><tr><th></th><th>Blacklist</th><th>Category</th><th>Result</th></tr></thead>
+      <tbody><tr class="clean-row"><td>✅</td><td>0Spam Domain</td><td>0Spam</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Credit (CR)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Malware (MW)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>SURBL Multi</td><td>SURBL</td><td class="error-text">Error: All nameservers failed to answer the query convertkit-mail2.</td></tr><tr class="error-row"><td>⚠️</td><td>SURBL Phish (PH)</td><td>SURBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Spam (SC)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="error-text">Error: blocked/open-resolver (127.255.255.254)</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Black</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Grey</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Multi</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Red</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
+    </table>
+  </details>
+</div>
+<div class="ip-card domain-card" id="domain-pool0-3">
+  <div class="ip-card-header">
+    <div class="ip-title">
+      <span class="ip-address domain-name">click.convertkit-mail2.com</span>
+      <span class="badge badge-danger">Blacklisted</span>
+      <span class="pool-badge">ConvertKit Mail</span>
+    </div>
+    <div class="score-ring" style="--score-color:#22c55e;">
+      <span class="score-number">99</span>
+      <span class="score-label">/ 100</span>
+    </div>
+  </div>
+  <div class="ip-meta">
+    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 9 clean &nbsp;·&nbsp; 12 total</span></div>
+  </div>
+  
+  
+<div class="vt-panel">
+  <div class="vt-header">
+    <span class="vt-logo">VirusTotal</span>
+    <span class="vt-meta">92 engines &nbsp;·&nbsp; Last scanned 2026-05-18</span>
+    <span class="vt-rep" style="color:#22c55e">Community score: +1</span>
+  </div>
+  <div class="vt-bar-wrap">
+    <div class="vt-bar">
+      <div class="vt-seg vt-mal" style="width:3%"></div>
+      <div class="vt-seg vt-sus" style="width:0%"></div>
+      <div class="vt-seg vt-har" style="width:62%"></div>
+      <div class="vt-seg vt-und" style="width:35%"></div>
+    </div>
+    <div class="vt-legend">
+      <span class="leg-dot leg-mal"></span>3 malicious &nbsp;
+      <span class="leg-dot leg-sus"></span>0 suspicious &nbsp;
+      <span class="leg-dot leg-har"></span>57 harmless &nbsp;
+      <span class="leg-dot leg-und"></span>32 undetected
+    </div>
+  </div>
+  
+  <details class="vt-flagged-details"><summary>Show 3 flagging engine(s)</summary><table class="vt-flagged-table"><thead><tr><th>Engine</th><th>Category</th><th>Detection</th></tr></thead><tbody><tr><td class="vt-engine">Chong Lua Dao</td><td class='vt-cat-mal'>Malicious</td><td class="vt-result-label">malicious</td></tr><tr><td class="vt-engine">CRDF</td><td class='vt-cat-mal'>Malicious</td><td class="vt-result-label">malicious</td></tr><tr><td class="vt-engine">Phishing Database</td><td class='vt-cat-mal'>Malicious</td><td class="vt-result-label">phishing</td></tr></tbody></table></details>
+</div>
+  <details class="dnsbl-details">
+    <summary>Show all 12 domain blacklist results</summary>
+    <table class="dnsbl-table">
+      <thead><tr><th></th><th>Blacklist</th><th>Category</th><th>Result</th></tr></thead>
+      <tbody><tr class="clean-row"><td>✅</td><td>0Spam Domain</td><td>0Spam</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Credit (CR)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Malware (MW)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>SURBL Multi</td><td>SURBL</td><td class="error-text">Error: All nameservers failed to answer the query click.convertkit-</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Phish (PH)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>SURBL Spam (SC)</td><td>SURBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="error-row"><td>⚠️</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="error-text">Error: blocked/open-resolver (127.255.255.254)</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Black</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Grey</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Multi</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Red</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
+    </table>
+  </details>
+</div>
+<div class="ip-card domain-card" id="domain-pool0-4">
+  <div class="ip-card-header">
+    <div class="ip-title">
+      <span class="ip-address domain-name">convertkit-mail3.com</span>
+      <span class="badge badge-clean">Clean</span>
+      <span class="pool-badge">ConvertKit Mail</span>
+    </div>
+    <div class="score-ring" style="--score-color:#22c55e;">
+      <span class="score-number">100</span>
+      <span class="score-label">/ 100</span>
+    </div>
+  </div>
+  <div class="ip-meta">
+    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 9 clean &nbsp;·&nbsp; 12 total</span></div>
+  </div>
+  
+  
+<div class="vt-panel">
+  <div class="vt-header">
+    <span class="vt-logo">VirusTotal</span>
+    <span class="vt-meta">92 engines &nbsp;·&nbsp; Last scanned 2026-05-12</span>
+    <span class="vt-rep" style="color:#22c55e">Community score: +0</span>
+  </div>
+  <div class="vt-bar-wrap">
+    <div class="vt-bar">
+      <div class="vt-seg vt-mal" style="width:0%"></div>
+      <div class="vt-seg vt-sus" style="width:0%"></div>
+      <div class="vt-seg vt-har" style="width:65%"></div>
+      <div class="vt-seg vt-und" style="width:35%"></div>
+    </div>
+    <div class="vt-legend">
+      <span class="leg-dot leg-mal"></span>0 malicious &nbsp;
+      <span class="leg-dot leg-sus"></span>0 suspicious &nbsp;
+      <span class="leg-dot leg-har"></span>60 harmless &nbsp;
+      <span class="leg-dot leg-und"></span>32 undetected
+    </div>
+  </div>
+  <div class="vt-cats">Categories: <span>Business/Economy, Information Technology (alphaMountain.ai)</span></div>
+  
+</div>
+  <details class="dnsbl-details">
+    <summary>Show all 12 domain blacklist results</summary>
+    <table class="dnsbl-table">
+      <thead><tr><th></th><th>Blacklist</th><th>Category</th><th>Result</th></tr></thead>
+      <tbody><tr class="clean-row"><td>✅</td><td>0Spam Domain</td><td>0Spam</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Credit (CR)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Malware (MW)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>SURBL Multi</td><td>SURBL</td><td class="error-text">Error: All nameservers failed to answer the query convertkit-mail3.</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Phish (PH)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Spam (SC)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="error-text">Error: blocked/open-resolver (127.255.255.254)</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Black</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Grey</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Multi</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Red</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
+    </table>
+  </details>
+</div>
+<div class="ip-card domain-card" id="domain-pool0-5">
+  <div class="ip-card-header">
+    <div class="ip-title">
+      <span class="ip-address domain-name">click.convertkit-mail3.com</span>
+      <span class="badge badge-clean">Clean</span>
+      <span class="pool-badge">ConvertKit Mail</span>
+    </div>
+    <div class="score-ring" style="--score-color:#22c55e;">
+      <span class="score-number">100</span>
+      <span class="score-label">/ 100</span>
+    </div>
+  </div>
+  <div class="ip-meta">
+    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 10 clean &nbsp;·&nbsp; 12 total</span></div>
+  </div>
+  
+  
+<div class="vt-panel">
+  <div class="vt-header">
+    <span class="vt-logo">VirusTotal</span>
+    <span class="vt-meta">92 engines &nbsp;·&nbsp; Last scanned 2026-03-18</span>
+    <span class="vt-rep" style="color:#22c55e">Community score: +1</span>
+  </div>
+  <div class="vt-bar-wrap">
+    <div class="vt-bar">
+      <div class="vt-seg vt-mal" style="width:0%"></div>
+      <div class="vt-seg vt-sus" style="width:0%"></div>
+      <div class="vt-seg vt-har" style="width:62%"></div>
+      <div class="vt-seg vt-und" style="width:38%"></div>
+    </div>
+    <div class="vt-legend">
+      <span class="leg-dot leg-mal"></span>0 malicious &nbsp;
+      <span class="leg-dot leg-sus"></span>0 suspicious &nbsp;
+      <span class="leg-dot leg-har"></span>57 harmless &nbsp;
+      <span class="leg-dot leg-und"></span>35 undetected
+    </div>
+  </div>
+  
+  
+</div>
+  <details class="dnsbl-details">
+    <summary>Show all 12 domain blacklist results</summary>
+    <table class="dnsbl-table">
+      <thead><tr><th></th><th>Blacklist</th><th>Category</th><th>Result</th></tr></thead>
+      <tbody><tr class="clean-row"><td>✅</td><td>0Spam Domain</td><td>0Spam</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Credit (CR)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Malware (MW)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>SURBL Multi</td><td>SURBL</td><td class="error-text">Error: All nameservers failed to answer the query click.convertkit-</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Phish (PH)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Spam (SC)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="error-text">Error: blocked/open-resolver (127.255.255.254)</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Black</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Grey</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Multi</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Red</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
+    </table>
+  </details>
+</div>
+<div class="ip-card domain-card" id="domain-pool0-6">
+  <div class="ip-card-header">
+    <div class="ip-title">
+      <span class="ip-address domain-name">convertkit-mail4.com</span>
+      <span class="badge badge-clean">Clean</span>
+      <span class="pool-badge">ConvertKit Mail</span>
+    </div>
+    <div class="score-ring" style="--score-color:#22c55e;">
+      <span class="score-number">100</span>
+      <span class="score-label">/ 100</span>
+    </div>
+  </div>
+  <div class="ip-meta">
+    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 8 clean &nbsp;·&nbsp; 12 total</span></div>
+  </div>
+  
+  
+<div class="vt-panel">
+  <div class="vt-header">
+    <span class="vt-logo">VirusTotal</span>
+    <span class="vt-meta">92 engines &nbsp;·&nbsp; Last scanned 2026-05-14</span>
+    <span class="vt-rep" style="color:#22c55e">Community score: +0</span>
+  </div>
+  <div class="vt-bar-wrap">
+    <div class="vt-bar">
+      <div class="vt-seg vt-mal" style="width:0%"></div>
+      <div class="vt-seg vt-sus" style="width:0%"></div>
+      <div class="vt-seg vt-har" style="width:63%"></div>
+      <div class="vt-seg vt-und" style="width:37%"></div>
+    </div>
+    <div class="vt-legend">
+      <span class="leg-dot leg-mal"></span>0 malicious &nbsp;
+      <span class="leg-dot leg-sus"></span>0 suspicious &nbsp;
+      <span class="leg-dot leg-har"></span>58 harmless &nbsp;
+      <span class="leg-dot leg-und"></span>34 undetected
+    </div>
+  </div>
+  <div class="vt-cats">Categories: <span>misc, information technology, business and economy</span></div>
+  
+</div>
+  <details class="dnsbl-details">
+    <summary>Show all 12 domain blacklist results</summary>
+    <table class="dnsbl-table">
+      <thead><tr><th></th><th>Blacklist</th><th>Category</th><th>Result</th></tr></thead>
+      <tbody><tr class="clean-row"><td>✅</td><td>0Spam Domain</td><td>0Spam</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Credit (CR)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Malware (MW)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>SURBL Multi</td><td>SURBL</td><td class="error-text">Error: All nameservers failed to answer the query convertkit-mail4.</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Phish (PH)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Spam (SC)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="error-text">Error: blocked/open-resolver (127.255.255.254)</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Black</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Grey</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Multi</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Red</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
+    </table>
+  </details>
+</div>
+<div class="ip-card domain-card" id="domain-pool0-7">
+  <div class="ip-card-header">
+    <div class="ip-title">
+      <span class="ip-address domain-name">click.convertkit-mail4.com</span>
+      <span class="badge badge-warning">Warning</span>
+      <span class="pool-badge">ConvertKit Mail</span>
+    </div>
+    <div class="score-ring" style="--score-color:#22c55e;">
+      <span class="score-number">100</span>
+      <span class="score-label">/ 100</span>
+    </div>
+  </div>
+  <div class="ip-meta">
+    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 9 clean &nbsp;·&nbsp; 12 total</span></div>
+  </div>
+  
+  
+<div class="vt-panel">
+  <div class="vt-header">
+    <span class="vt-logo">VirusTotal</span>
+    <span class="vt-meta">92 engines &nbsp;·&nbsp; Last scanned 2026-05-18</span>
+    <span class="vt-rep" style="color:#22c55e">Community score: +1</span>
+  </div>
+  <div class="vt-bar-wrap">
+    <div class="vt-bar">
+      <div class="vt-seg vt-mal" style="width:1%"></div>
+      <div class="vt-seg vt-sus" style="width:0%"></div>
+      <div class="vt-seg vt-har" style="width:62%"></div>
+      <div class="vt-seg vt-und" style="width:37%"></div>
+    </div>
+    <div class="vt-legend">
+      <span class="leg-dot leg-mal"></span>1 malicious &nbsp;
+      <span class="leg-dot leg-sus"></span>0 suspicious &nbsp;
+      <span class="leg-dot leg-har"></span>57 harmless &nbsp;
+      <span class="leg-dot leg-und"></span>34 undetected
+    </div>
+  </div>
+  
+  <details class="vt-flagged-details"><summary>Show 1 flagging engine(s)</summary><table class="vt-flagged-table"><thead><tr><th>Engine</th><th>Category</th><th>Detection</th></tr></thead><tbody><tr><td class="vt-engine">CRDF</td><td class='vt-cat-mal'>Malicious</td><td class="vt-result-label">malicious</td></tr></tbody></table></details>
+</div>
+  <details class="dnsbl-details">
+    <summary>Show all 12 domain blacklist results</summary>
+    <table class="dnsbl-table">
+      <thead><tr><th></th><th>Blacklist</th><th>Category</th><th>Result</th></tr></thead>
+      <tbody><tr class="clean-row"><td>✅</td><td>0Spam Domain</td><td>0Spam</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Credit (CR)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Malware (MW)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>SURBL Multi</td><td>SURBL</td><td class="error-text">Error: All nameservers failed to answer the query click.convertkit-</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Phish (PH)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Spam (SC)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="error-text">Error: blocked/open-resolver (127.255.255.254)</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Black</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Grey</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Multi</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Red</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
+    </table>
+  </details>
+</div>
+<div class="ip-card domain-card" id="domain-pool0-8">
+  <div class="ip-card-header">
+    <div class="ip-title">
+      <span class="ip-address domain-name">convertkit-mail5.com</span>
+      <span class="badge badge-clean">Clean</span>
+      <span class="pool-badge">ConvertKit Mail</span>
+    </div>
+    <div class="score-ring" style="--score-color:#22c55e;">
+      <span class="score-number">100</span>
+      <span class="score-label">/ 100</span>
+    </div>
+  </div>
+  <div class="ip-meta">
+    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 10 clean &nbsp;·&nbsp; 12 total</span></div>
+  </div>
+  
+  
+<div class="vt-panel">
+  <div class="vt-header">
+    <span class="vt-logo">VirusTotal</span>
+    <span class="vt-meta">92 engines &nbsp;·&nbsp; Last scanned 2026-05-09</span>
+    <span class="vt-rep" style="color:#22c55e">Community score: +0</span>
+  </div>
+  <div class="vt-bar-wrap">
+    <div class="vt-bar">
+      <div class="vt-seg vt-mal" style="width:0%"></div>
+      <div class="vt-seg vt-sus" style="width:0%"></div>
+      <div class="vt-seg vt-har" style="width:63%"></div>
+      <div class="vt-seg vt-und" style="width:37%"></div>
+    </div>
+    <div class="vt-legend">
+      <span class="leg-dot leg-mal"></span>0 malicious &nbsp;
+      <span class="leg-dot leg-sus"></span>0 suspicious &nbsp;
+      <span class="leg-dot leg-har"></span>58 harmless &nbsp;
+      <span class="leg-dot leg-und"></span>34 undetected
+    </div>
+  </div>
+  
+  
+</div>
+  <details class="dnsbl-details">
+    <summary>Show all 12 domain blacklist results</summary>
+    <table class="dnsbl-table">
+      <thead><tr><th></th><th>Blacklist</th><th>Category</th><th>Result</th></tr></thead>
+      <tbody><tr class="clean-row"><td>✅</td><td>0Spam Domain</td><td>0Spam</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Credit (CR)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Malware (MW)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>SURBL Multi</td><td>SURBL</td><td class="error-text">Error: All nameservers failed to answer the query convertkit-mail5.</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Phish (PH)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Spam (SC)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="error-text">Error: blocked/open-resolver (127.255.255.254)</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Black</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Grey</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Multi</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Red</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
+    </table>
+  </details>
+</div>
+<div class="ip-card domain-card" id="domain-pool0-9">
+  <div class="ip-card-header">
+    <div class="ip-title">
+      <span class="ip-address domain-name">click.convertkit-mail5.com</span>
+      <span class="badge badge-clean">Clean</span>
+      <span class="pool-badge">ConvertKit Mail</span>
+    </div>
+    <div class="score-ring" style="--score-color:#22c55e;">
+      <span class="score-number">100</span>
+      <span class="score-label">/ 100</span>
+    </div>
+  </div>
+  <div class="ip-meta">
+    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 9 clean &nbsp;·&nbsp; 12 total</span></div>
+  </div>
+  
+  
+<div class="vt-panel">
+  <div class="vt-header">
+    <span class="vt-logo">VirusTotal</span>
+    <span class="vt-meta">92 engines &nbsp;·&nbsp; Last scanned 2026-04-21</span>
+    <span class="vt-rep" style="color:#22c55e">Community score: +0</span>
+  </div>
+  <div class="vt-bar-wrap">
+    <div class="vt-bar">
+      <div class="vt-seg vt-mal" style="width:0%"></div>
+      <div class="vt-seg vt-sus" style="width:0%"></div>
+      <div class="vt-seg vt-har" style="width:59%"></div>
+      <div class="vt-seg vt-und" style="width:41%"></div>
+    </div>
+    <div class="vt-legend">
+      <span class="leg-dot leg-mal"></span>0 malicious &nbsp;
+      <span class="leg-dot leg-sus"></span>0 suspicious &nbsp;
+      <span class="leg-dot leg-har"></span>54 harmless &nbsp;
+      <span class="leg-dot leg-und"></span>38 undetected
+    </div>
+  </div>
+  
+  
+</div>
+  <details class="dnsbl-details">
+    <summary>Show all 12 domain blacklist results</summary>
+    <table class="dnsbl-table">
+      <thead><tr><th></th><th>Blacklist</th><th>Category</th><th>Result</th></tr></thead>
+      <tbody><tr class="clean-row"><td>✅</td><td>0Spam Domain</td><td>0Spam</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Credit (CR)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Malware (MW)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>SURBL Multi</td><td>SURBL</td><td class="error-text">Error: All nameservers failed to answer the query click.convertkit-</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Phish (PH)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Spam (SC)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="error-text">Error: blocked/open-resolver (127.255.255.254)</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Black</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Grey</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Multi</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Red</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
+    </table>
+  </details>
+</div>
+<div class="ip-card domain-card" id="domain-pool0-10">
+  <div class="ip-card-header">
+    <div class="ip-title">
+      <span class="ip-address domain-name">convertkit-mail6.com</span>
+      <span class="badge badge-clean">Clean</span>
+      <span class="pool-badge">ConvertKit Mail</span>
+    </div>
+    <div class="score-ring" style="--score-color:#22c55e;">
+      <span class="score-number">100</span>
+      <span class="score-label">/ 100</span>
+    </div>
+  </div>
+  <div class="ip-meta">
+    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 10 clean &nbsp;·&nbsp; 12 total</span></div>
+  </div>
+  
+  
+<div class="vt-panel">
+  <div class="vt-header">
+    <span class="vt-logo">VirusTotal</span>
+    <span class="vt-meta">92 engines &nbsp;·&nbsp; Last scanned 2026-05-05</span>
+    <span class="vt-rep" style="color:#22c55e">Community score: +0</span>
+  </div>
+  <div class="vt-bar-wrap">
+    <div class="vt-bar">
+      <div class="vt-seg vt-mal" style="width:0%"></div>
+      <div class="vt-seg vt-sus" style="width:0%"></div>
+      <div class="vt-seg vt-har" style="width:63%"></div>
+      <div class="vt-seg vt-und" style="width:37%"></div>
+    </div>
+    <div class="vt-legend">
+      <span class="leg-dot leg-mal"></span>0 malicious &nbsp;
+      <span class="leg-dot leg-sus"></span>0 suspicious &nbsp;
+      <span class="leg-dot leg-har"></span>58 harmless &nbsp;
+      <span class="leg-dot leg-und"></span>34 undetected
+    </div>
+  </div>
+  
+  
+</div>
+  <details class="dnsbl-details">
+    <summary>Show all 12 domain blacklist results</summary>
+    <table class="dnsbl-table">
+      <thead><tr><th></th><th>Blacklist</th><th>Category</th><th>Result</th></tr></thead>
+      <tbody><tr class="clean-row"><td>✅</td><td>0Spam Domain</td><td>0Spam</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Credit (CR)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Malware (MW)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>SURBL Multi</td><td>SURBL</td><td class="error-text">Error: All nameservers failed to answer the query convertkit-mail6.</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Phish (PH)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Spam (SC)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="error-text">Error: blocked/open-resolver (127.255.255.254)</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Black</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Grey</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Multi</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Red</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
+    </table>
+  </details>
+</div>
+<div class="ip-card domain-card" id="domain-pool0-11">
+  <div class="ip-card-header">
+    <div class="ip-title">
+      <span class="ip-address domain-name">click.convertkit-mail6.com</span>
+      <span class="badge badge-clean">Clean</span>
+      <span class="pool-badge">ConvertKit Mail</span>
+    </div>
+    <div class="score-ring" style="--score-color:#22c55e;">
+      <span class="score-number">100</span>
+      <span class="score-label">/ 100</span>
+    </div>
+  </div>
+  <div class="ip-meta">
+    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 9 clean &nbsp;·&nbsp; 12 total</span></div>
+  </div>
+  
+  
+<div class="vt-panel">
+  <div class="vt-header">
+    <span class="vt-logo">VirusTotal</span>
+    <span class="vt-meta">92 engines &nbsp;·&nbsp; Last scanned 2025-06-24</span>
+    <span class="vt-rep" style="color:#22c55e">Community score: +0</span>
+  </div>
+  <div class="vt-bar-wrap">
+    <div class="vt-bar">
+      <div class="vt-seg vt-mal" style="width:0%"></div>
+      <div class="vt-seg vt-sus" style="width:0%"></div>
+      <div class="vt-seg vt-har" style="width:59%"></div>
+      <div class="vt-seg vt-und" style="width:41%"></div>
+    </div>
+    <div class="vt-legend">
+      <span class="leg-dot leg-mal"></span>0 malicious &nbsp;
+      <span class="leg-dot leg-sus"></span>0 suspicious &nbsp;
+      <span class="leg-dot leg-har"></span>54 harmless &nbsp;
+      <span class="leg-dot leg-und"></span>38 undetected
+    </div>
+  </div>
+  
+  
+</div>
+  <details class="dnsbl-details">
+    <summary>Show all 12 domain blacklist results</summary>
+    <table class="dnsbl-table">
+      <thead><tr><th></th><th>Blacklist</th><th>Category</th><th>Result</th></tr></thead>
+      <tbody><tr class="clean-row"><td>✅</td><td>0Spam Domain</td><td>0Spam</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Credit (CR)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Malware (MW)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>SURBL Multi</td><td>SURBL</td><td class="error-text">Error: All nameservers failed to answer the query click.convertkit-</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Phish (PH)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Spam (SC)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="error-text">Error: blocked/open-resolver (127.255.255.254)</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Black</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Grey</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Multi</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Red</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
+    </table>
+  </details>
+</div></div>
+</div>
+<div class="pool-section" id="domain-pool-1">
+  <div class="pool-header">
+    <div class="pool-title-row">
+      <h2 class="pool-name">Kit Mail</h2>
+      <div class="pool-score-chip" style="--pc:#22c55e">Avg 100/100</div>
+    </div>
+    <div class="pool-stats">
+      <span class="ps-total">12 domains</span>
+      <span class="ps-sep">·</span>
+      <span class="ps-clean">✅ 11 clean</span>
+      <span class="ps-sep">·</span>
+      <span class="ps-warn">⚠ 0 warning</span>
+      <span class="ps-sep">·</span>
+      <span class="ps-danger">🔴 1 blacklisted</span>
+    </div>
+  </div>
+  <div class="pool-cards">
+<div class="ip-card domain-card" id="domain-pool1-0">
+  <div class="ip-card-header">
+    <div class="ip-title">
+      <span class="ip-address domain-name">kit-mail1.com</span>
+      <span class="badge badge-clean">Clean</span>
+      <span class="pool-badge">Kit Mail</span>
+    </div>
+    <div class="score-ring" style="--score-color:#22c55e;">
+      <span class="score-number">100</span>
+      <span class="score-label">/ 100</span>
+    </div>
+  </div>
+  <div class="ip-meta">
+    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 9 clean &nbsp;·&nbsp; 12 total</span></div>
+  </div>
+  
+  
+<div class="vt-panel">
+  <div class="vt-header">
+    <span class="vt-logo">VirusTotal</span>
+    <span class="vt-meta">92 engines &nbsp;·&nbsp; Last scanned 2026-05-18</span>
+    <span class="vt-rep" style="color:#22c55e">Community score: +0</span>
+  </div>
+  <div class="vt-bar-wrap">
+    <div class="vt-bar">
+      <div class="vt-seg vt-mal" style="width:0%"></div>
+      <div class="vt-seg vt-sus" style="width:0%"></div>
+      <div class="vt-seg vt-har" style="width:62%"></div>
+      <div class="vt-seg vt-und" style="width:38%"></div>
+    </div>
+    <div class="vt-legend">
+      <span class="leg-dot leg-mal"></span>0 malicious &nbsp;
+      <span class="leg-dot leg-sus"></span>0 suspicious &nbsp;
+      <span class="leg-dot leg-har"></span>57 harmless &nbsp;
+      <span class="leg-dot leg-und"></span>35 undetected
+    </div>
+  </div>
+  
+  
+</div>
+  <details class="dnsbl-details">
+    <summary>Show all 12 domain blacklist results</summary>
+    <table class="dnsbl-table">
+      <thead><tr><th></th><th>Blacklist</th><th>Category</th><th>Result</th></tr></thead>
+      <tbody><tr class="clean-row"><td>✅</td><td>0Spam Domain</td><td>0Spam</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Credit (CR)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Malware (MW)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>SURBL Multi</td><td>SURBL</td><td class="error-text">Error: All nameservers failed to answer the query kit-mail1.com.mul</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Phish (PH)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>SURBL Spam (SC)</td><td>SURBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="error-row"><td>⚠️</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="error-text">Error: blocked/open-resolver (127.255.255.254)</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Black</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Grey</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Multi</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Red</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
+    </table>
+  </details>
+</div>
+<div class="ip-card domain-card" id="domain-pool1-1">
+  <div class="ip-card-header">
+    <div class="ip-title">
+      <span class="ip-address domain-name">click.kit-mail1.com</span>
+      <span class="badge badge-danger">Blacklisted</span>
+      <span class="pool-badge">Kit Mail</span>
+    </div>
+    <div class="score-ring" style="--score-color:#22c55e;">
+      <span class="score-number">97</span>
+      <span class="score-label">/ 100</span>
+    </div>
+  </div>
+  <div class="ip-meta">
+    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 8 clean &nbsp;·&nbsp; 12 total</span></div>
+  </div>
+  
+  
+<div class="vt-panel">
+  <div class="vt-header">
+    <span class="vt-logo">VirusTotal</span>
+    <span class="vt-meta">92 engines &nbsp;·&nbsp; Last scanned 2026-05-18</span>
+    <span class="vt-rep" style="color:#22c55e">Community score: +0</span>
+  </div>
+  <div class="vt-bar-wrap">
+    <div class="vt-bar">
+      <div class="vt-seg vt-mal" style="width:7%"></div>
+      <div class="vt-seg vt-sus" style="width:1%"></div>
+      <div class="vt-seg vt-har" style="width:58%"></div>
+      <div class="vt-seg vt-und" style="width:34%"></div>
+    </div>
+    <div class="vt-legend">
+      <span class="leg-dot leg-mal"></span>6 malicious &nbsp;
+      <span class="leg-dot leg-sus"></span>1 suspicious &nbsp;
+      <span class="leg-dot leg-har"></span>53 harmless &nbsp;
+      <span class="leg-dot leg-und"></span>32 undetected
+    </div>
+  </div>
+  
+  <details class="vt-flagged-details"><summary>Show 7 flagging engine(s)</summary><table class="vt-flagged-table"><thead><tr><th>Engine</th><th>Category</th><th>Detection</th></tr></thead><tbody><tr><td class="vt-engine">ADMINUSLabs</td><td class='vt-cat-mal'>Malicious</td><td class="vt-result-label">malicious</td></tr><tr><td class="vt-engine">Chong Lua Dao</td><td class='vt-cat-mal'>Malicious</td><td class="vt-result-label">malicious</td></tr><tr><td class="vt-engine">Criminal IP</td><td class='vt-cat-mal'>Malicious</td><td class="vt-result-label">phishing</td></tr><tr><td class="vt-engine">CyRadar</td><td class='vt-cat-mal'>Malicious</td><td class="vt-result-label">malicious</td></tr><tr><td class="vt-engine">Phishing Database</td><td class='vt-cat-mal'>Malicious</td><td class="vt-result-label">phishing</td></tr><tr><td class="vt-engine">Webroot</td><td class='vt-cat-mal'>Malicious</td><td class="vt-result-label">malicious</td></tr><tr><td class="vt-engine">alphaMountain.ai</td><td class='vt-cat-sus'>Suspicious</td><td class="vt-result-label">suspicious</td></tr></tbody></table></details>
+</div>
+  <details class="dnsbl-details">
+    <summary>Show all 12 domain blacklist results</summary>
+    <table class="dnsbl-table">
+      <thead><tr><th></th><th>Blacklist</th><th>Category</th><th>Result</th></tr></thead>
+      <tbody><tr class="clean-row"><td>✅</td><td>0Spam Domain</td><td>0Spam</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Credit (CR)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Malware (MW)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>SURBL Multi</td><td>SURBL</td><td class="error-text">Error: All nameservers failed to answer the query click.kit-mail1.c</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Phish (PH)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Spam (SC)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="error-text">Error: blocked/open-resolver (127.255.255.254)</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Black</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Grey</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Multi</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Red</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
+    </table>
+  </details>
+</div>
+<div class="ip-card domain-card" id="domain-pool1-2">
+  <div class="ip-card-header">
+    <div class="ip-title">
+      <span class="ip-address domain-name">kit-mail2.com</span>
+      <span class="badge badge-clean">Clean</span>
+      <span class="pool-badge">Kit Mail</span>
+    </div>
+    <div class="score-ring" style="--score-color:#22c55e;">
+      <span class="score-number">100</span>
+      <span class="score-label">/ 100</span>
+    </div>
+  </div>
+  <div class="ip-meta">
+    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 8 clean &nbsp;·&nbsp; 12 total</span></div>
+  </div>
+  
+  
+<div class="vt-panel">
+  <div class="vt-header">
+    <span class="vt-logo">VirusTotal</span>
+    <span class="vt-meta">92 engines &nbsp;·&nbsp; Last scanned 2026-05-15</span>
+    <span class="vt-rep" style="color:#22c55e">Community score: +0</span>
+  </div>
+  <div class="vt-bar-wrap">
+    <div class="vt-bar">
+      <div class="vt-seg vt-mal" style="width:0%"></div>
+      <div class="vt-seg vt-sus" style="width:0%"></div>
+      <div class="vt-seg vt-har" style="width:62%"></div>
+      <div class="vt-seg vt-und" style="width:38%"></div>
+    </div>
+    <div class="vt-legend">
+      <span class="leg-dot leg-mal"></span>0 malicious &nbsp;
+      <span class="leg-dot leg-sus"></span>0 suspicious &nbsp;
+      <span class="leg-dot leg-har"></span>57 harmless &nbsp;
+      <span class="leg-dot leg-und"></span>35 undetected
+    </div>
+  </div>
+  
+  
+</div>
+  <details class="dnsbl-details">
+    <summary>Show all 12 domain blacklist results</summary>
+    <table class="dnsbl-table">
+      <thead><tr><th></th><th>Blacklist</th><th>Category</th><th>Result</th></tr></thead>
+      <tbody><tr class="clean-row"><td>✅</td><td>0Spam Domain</td><td>0Spam</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Credit (CR)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Malware (MW)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>SURBL Multi</td><td>SURBL</td><td class="error-text">Error: All nameservers failed to answer the query kit-mail2.com.mul</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Phish (PH)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Spam (SC)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="error-text">Error: blocked/open-resolver (127.255.255.254)</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Black</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Grey</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Multi</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Red</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
+    </table>
+  </details>
+</div>
+<div class="ip-card domain-card" id="domain-pool1-3">
+  <div class="ip-card-header">
+    <div class="ip-title">
+      <span class="ip-address domain-name">click.kit-mail2.com</span>
+      <span class="badge badge-clean">Clean</span>
+      <span class="pool-badge">Kit Mail</span>
+    </div>
+    <div class="score-ring" style="--score-color:#22c55e;">
+      <span class="score-number">100</span>
+      <span class="score-label">/ 100</span>
+    </div>
+  </div>
+  <div class="ip-meta">
+    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 9 clean &nbsp;·&nbsp; 12 total</span></div>
+  </div>
+  
+  
+<div class="vt-panel">
+  <div class="vt-header">
+    <span class="vt-logo">VirusTotal</span>
+    <span class="vt-meta">92 engines &nbsp;·&nbsp; Last scanned 2026-05-15</span>
+    <span class="vt-rep" style="color:#22c55e">Community score: +0</span>
+  </div>
+  <div class="vt-bar-wrap">
+    <div class="vt-bar">
+      <div class="vt-seg vt-mal" style="width:0%"></div>
+      <div class="vt-seg vt-sus" style="width:0%"></div>
+      <div class="vt-seg vt-har" style="width:63%"></div>
+      <div class="vt-seg vt-und" style="width:37%"></div>
+    </div>
+    <div class="vt-legend">
+      <span class="leg-dot leg-mal"></span>0 malicious &nbsp;
+      <span class="leg-dot leg-sus"></span>0 suspicious &nbsp;
+      <span class="leg-dot leg-har"></span>58 harmless &nbsp;
+      <span class="leg-dot leg-und"></span>34 undetected
+    </div>
+  </div>
+  
+  
+</div>
+  <details class="dnsbl-details">
+    <summary>Show all 12 domain blacklist results</summary>
+    <table class="dnsbl-table">
+      <thead><tr><th></th><th>Blacklist</th><th>Category</th><th>Result</th></tr></thead>
+      <tbody><tr class="clean-row"><td>✅</td><td>0Spam Domain</td><td>0Spam</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Credit (CR)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Malware (MW)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>SURBL Multi</td><td>SURBL</td><td class="error-text">Error: All nameservers failed to answer the query click.kit-mail2.c</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Phish (PH)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Spam (SC)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="error-text">Error: blocked/open-resolver (127.255.255.254)</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Black</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Grey</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Multi</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Red</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
+    </table>
+  </details>
+</div>
+<div class="ip-card domain-card" id="domain-pool1-4">
+  <div class="ip-card-header">
+    <div class="ip-title">
+      <span class="ip-address domain-name">kit-mail3.com</span>
+      <span class="badge badge-clean">Clean</span>
+      <span class="pool-badge">Kit Mail</span>
+    </div>
+    <div class="score-ring" style="--score-color:#22c55e;">
+      <span class="score-number">100</span>
+      <span class="score-label">/ 100</span>
+    </div>
+  </div>
+  <div class="ip-meta">
+    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 10 clean &nbsp;·&nbsp; 12 total</span></div>
+  </div>
+  
+  
+<div class="vt-panel">
+  <div class="vt-header">
+    <span class="vt-logo">VirusTotal</span>
+    <span class="vt-meta">92 engines &nbsp;·&nbsp; Last scanned 2026-05-15</span>
+    <span class="vt-rep" style="color:#22c55e">Community score: +0</span>
+  </div>
+  <div class="vt-bar-wrap">
+    <div class="vt-bar">
+      <div class="vt-seg vt-mal" style="width:0%"></div>
+      <div class="vt-seg vt-sus" style="width:0%"></div>
+      <div class="vt-seg vt-har" style="width:65%"></div>
+      <div class="vt-seg vt-und" style="width:35%"></div>
+    </div>
+    <div class="vt-legend">
+      <span class="leg-dot leg-mal"></span>0 malicious &nbsp;
+      <span class="leg-dot leg-sus"></span>0 suspicious &nbsp;
+      <span class="leg-dot leg-har"></span>60 harmless &nbsp;
+      <span class="leg-dot leg-und"></span>32 undetected
+    </div>
+  </div>
+  <div class="vt-cats">Categories: <span>information technology</span></div>
+  
+</div>
+  <details class="dnsbl-details">
+    <summary>Show all 12 domain blacklist results</summary>
+    <table class="dnsbl-table">
+      <thead><tr><th></th><th>Blacklist</th><th>Category</th><th>Result</th></tr></thead>
+      <tbody><tr class="clean-row"><td>✅</td><td>0Spam Domain</td><td>0Spam</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Credit (CR)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Malware (MW)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>SURBL Multi</td><td>SURBL</td><td class="error-text">Error: All nameservers failed to answer the query kit-mail3.com.mul</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Phish (PH)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Spam (SC)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="error-text">Error: blocked/open-resolver (127.255.255.254)</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Black</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Grey</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Multi</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Red</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
+    </table>
+  </details>
+</div>
+<div class="ip-card domain-card" id="domain-pool1-5">
+  <div class="ip-card-header">
+    <div class="ip-title">
+      <span class="ip-address domain-name">click.kit-mail3.com</span>
+      <span class="badge badge-clean">Clean</span>
+      <span class="pool-badge">Kit Mail</span>
+    </div>
+    <div class="score-ring" style="--score-color:#22c55e;">
+      <span class="score-number">100</span>
+      <span class="score-label">/ 100</span>
+    </div>
+  </div>
+  <div class="ip-meta">
+    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 10 clean &nbsp;·&nbsp; 12 total</span></div>
+  </div>
+  
+  
+<div class="vt-panel">
+  <div class="vt-header">
+    <span class="vt-logo">VirusTotal</span>
+    <span class="vt-meta">92 engines &nbsp;·&nbsp; Last scanned 2026-05-15</span>
+    <span class="vt-rep" style="color:#22c55e">Community score: +0</span>
+  </div>
+  <div class="vt-bar-wrap">
+    <div class="vt-bar">
+      <div class="vt-seg vt-mal" style="width:0%"></div>
+      <div class="vt-seg vt-sus" style="width:0%"></div>
+      <div class="vt-seg vt-har" style="width:63%"></div>
+      <div class="vt-seg vt-und" style="width:37%"></div>
+    </div>
+    <div class="vt-legend">
+      <span class="leg-dot leg-mal"></span>0 malicious &nbsp;
+      <span class="leg-dot leg-sus"></span>0 suspicious &nbsp;
+      <span class="leg-dot leg-har"></span>58 harmless &nbsp;
+      <span class="leg-dot leg-und"></span>34 undetected
+    </div>
+  </div>
+  
+  
+</div>
+  <details class="dnsbl-details">
+    <summary>Show all 12 domain blacklist results</summary>
+    <table class="dnsbl-table">
+      <thead><tr><th></th><th>Blacklist</th><th>Category</th><th>Result</th></tr></thead>
+      <tbody><tr class="clean-row"><td>✅</td><td>0Spam Domain</td><td>0Spam</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Credit (CR)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Malware (MW)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>SURBL Multi</td><td>SURBL</td><td class="error-text">Error: All nameservers failed to answer the query click.kit-mail3.c</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Phish (PH)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Spam (SC)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="error-text">Error: blocked/open-resolver (127.255.255.254)</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Black</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Grey</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Multi</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Red</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
+    </table>
+  </details>
+</div>
+<div class="ip-card domain-card" id="domain-pool1-6">
+  <div class="ip-card-header">
+    <div class="ip-title">
+      <span class="ip-address domain-name">kit-mail4.com</span>
+      <span class="badge badge-clean">Clean</span>
+      <span class="pool-badge">Kit Mail</span>
+    </div>
+    <div class="score-ring" style="--score-color:#22c55e;">
+      <span class="score-number">100</span>
+      <span class="score-label">/ 100</span>
+    </div>
+  </div>
+  <div class="ip-meta">
+    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 10 clean &nbsp;·&nbsp; 12 total</span></div>
+  </div>
+  
+  
+<div class="vt-panel">
+  <div class="vt-header">
+    <span class="vt-logo">VirusTotal</span>
+    <span class="vt-meta">92 engines &nbsp;·&nbsp; Last scanned 2026-05-05</span>
+    <span class="vt-rep" style="color:#22c55e">Community score: +0</span>
+  </div>
+  <div class="vt-bar-wrap">
+    <div class="vt-bar">
+      <div class="vt-seg vt-mal" style="width:0%"></div>
+      <div class="vt-seg vt-sus" style="width:0%"></div>
+      <div class="vt-seg vt-har" style="width:62%"></div>
+      <div class="vt-seg vt-und" style="width:38%"></div>
+    </div>
+    <div class="vt-legend">
+      <span class="leg-dot leg-mal"></span>0 malicious &nbsp;
+      <span class="leg-dot leg-sus"></span>0 suspicious &nbsp;
+      <span class="leg-dot leg-har"></span>57 harmless &nbsp;
+      <span class="leg-dot leg-und"></span>35 undetected
+    </div>
+  </div>
+  
+  
+</div>
+  <details class="dnsbl-details">
+    <summary>Show all 12 domain blacklist results</summary>
+    <table class="dnsbl-table">
+      <thead><tr><th></th><th>Blacklist</th><th>Category</th><th>Result</th></tr></thead>
+      <tbody><tr class="clean-row"><td>✅</td><td>0Spam Domain</td><td>0Spam</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Credit (CR)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Malware (MW)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>SURBL Multi</td><td>SURBL</td><td class="error-text">Error: All nameservers failed to answer the query kit-mail4.com.mul</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Phish (PH)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Spam (SC)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="error-text">Error: blocked/open-resolver (127.255.255.254)</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Black</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Grey</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Multi</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Red</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
+    </table>
+  </details>
+</div>
+<div class="ip-card domain-card" id="domain-pool1-7">
+  <div class="ip-card-header">
+    <div class="ip-title">
+      <span class="ip-address domain-name">click.kit-mail4.com</span>
+      <span class="badge badge-clean">Clean</span>
+      <span class="pool-badge">Kit Mail</span>
+    </div>
+    <div class="score-ring" style="--score-color:#22c55e;">
+      <span class="score-number">100</span>
+      <span class="score-label">/ 100</span>
+    </div>
+  </div>
+  <div class="ip-meta">
+    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 8 clean &nbsp;·&nbsp; 12 total</span></div>
+  </div>
+  
+  
+<div class="vt-panel">
+  <div class="vt-header">
+    <span class="vt-logo">VirusTotal</span>
+    <span class="vt-meta">92 engines &nbsp;·&nbsp; Last scanned 2026-05-15</span>
+    <span class="vt-rep" style="color:#22c55e">Community score: +0</span>
+  </div>
+  <div class="vt-bar-wrap">
+    <div class="vt-bar">
+      <div class="vt-seg vt-mal" style="width:0%"></div>
+      <div class="vt-seg vt-sus" style="width:0%"></div>
+      <div class="vt-seg vt-har" style="width:63%"></div>
+      <div class="vt-seg vt-und" style="width:37%"></div>
+    </div>
+    <div class="vt-legend">
+      <span class="leg-dot leg-mal"></span>0 malicious &nbsp;
+      <span class="leg-dot leg-sus"></span>0 suspicious &nbsp;
+      <span class="leg-dot leg-har"></span>58 harmless &nbsp;
+      <span class="leg-dot leg-und"></span>34 undetected
+    </div>
+  </div>
+  
+  
+</div>
+  <details class="dnsbl-details">
+    <summary>Show all 12 domain blacklist results</summary>
+    <table class="dnsbl-table">
+      <thead><tr><th></th><th>Blacklist</th><th>Category</th><th>Result</th></tr></thead>
+      <tbody><tr class="clean-row"><td>✅</td><td>0Spam Domain</td><td>0Spam</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Credit (CR)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Malware (MW)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>SURBL Multi</td><td>SURBL</td><td class="error-text">Error: All nameservers failed to answer the query click.kit-mail4.c</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Phish (PH)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Spam (SC)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="error-text">Error: blocked/open-resolver (127.255.255.254)</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Black</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Grey</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Multi</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Red</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
+    </table>
+  </details>
+</div>
+<div class="ip-card domain-card" id="domain-pool1-8">
+  <div class="ip-card-header">
+    <div class="ip-title">
+      <span class="ip-address domain-name">kit-mail5.com</span>
+      <span class="badge badge-clean">Clean</span>
+      <span class="pool-badge">Kit Mail</span>
+    </div>
+    <div class="score-ring" style="--score-color:#22c55e;">
+      <span class="score-number">100</span>
+      <span class="score-label">/ 100</span>
+    </div>
+  </div>
+  <div class="ip-meta">
+    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 10 clean &nbsp;·&nbsp; 12 total</span></div>
+  </div>
+  
+  
+<div class="vt-panel">
+  <div class="vt-header">
+    <span class="vt-logo">VirusTotal</span>
+    <span class="vt-meta">92 engines &nbsp;·&nbsp; Last scanned 2026-05-15</span>
+    <span class="vt-rep" style="color:#22c55e">Community score: +0</span>
+  </div>
+  <div class="vt-bar-wrap">
+    <div class="vt-bar">
+      <div class="vt-seg vt-mal" style="width:0%"></div>
+      <div class="vt-seg vt-sus" style="width:0%"></div>
+      <div class="vt-seg vt-har" style="width:62%"></div>
+      <div class="vt-seg vt-und" style="width:38%"></div>
+    </div>
+    <div class="vt-legend">
+      <span class="leg-dot leg-mal"></span>0 malicious &nbsp;
+      <span class="leg-dot leg-sus"></span>0 suspicious &nbsp;
+      <span class="leg-dot leg-har"></span>57 harmless &nbsp;
+      <span class="leg-dot leg-und"></span>35 undetected
+    </div>
+  </div>
+  
+  
+</div>
+  <details class="dnsbl-details">
+    <summary>Show all 12 domain blacklist results</summary>
+    <table class="dnsbl-table">
+      <thead><tr><th></th><th>Blacklist</th><th>Category</th><th>Result</th></tr></thead>
+      <tbody><tr class="clean-row"><td>✅</td><td>0Spam Domain</td><td>0Spam</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Credit (CR)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Malware (MW)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>SURBL Multi</td><td>SURBL</td><td class="error-text">Error: All nameservers failed to answer the query kit-mail5.com.mul</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Phish (PH)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Spam (SC)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="error-text">Error: blocked/open-resolver (127.255.255.254)</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Black</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Grey</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Multi</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Red</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
+    </table>
+  </details>
+</div>
+<div class="ip-card domain-card" id="domain-pool1-9">
+  <div class="ip-card-header">
+    <div class="ip-title">
+      <span class="ip-address domain-name">click.kit-mail5.com</span>
+      <span class="badge badge-clean">Clean</span>
+      <span class="pool-badge">Kit Mail</span>
+    </div>
+    <div class="score-ring" style="--score-color:#22c55e;">
+      <span class="score-number">100</span>
+      <span class="score-label">/ 100</span>
+    </div>
+  </div>
+  <div class="ip-meta">
+    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 8 clean &nbsp;·&nbsp; 12 total</span></div>
+  </div>
+  
+  
+<div class="vt-panel">
+  <div class="vt-header">
+    <span class="vt-logo">VirusTotal</span>
+    <span class="vt-meta">92 engines &nbsp;·&nbsp; Last scanned 2026-05-15</span>
+    <span class="vt-rep" style="color:#22c55e">Community score: +0</span>
+  </div>
+  <div class="vt-bar-wrap">
+    <div class="vt-bar">
+      <div class="vt-seg vt-mal" style="width:0%"></div>
+      <div class="vt-seg vt-sus" style="width:0%"></div>
+      <div class="vt-seg vt-har" style="width:63%"></div>
+      <div class="vt-seg vt-und" style="width:37%"></div>
+    </div>
+    <div class="vt-legend">
+      <span class="leg-dot leg-mal"></span>0 malicious &nbsp;
+      <span class="leg-dot leg-sus"></span>0 suspicious &nbsp;
+      <span class="leg-dot leg-har"></span>58 harmless &nbsp;
+      <span class="leg-dot leg-und"></span>34 undetected
+    </div>
+  </div>
+  
+  
+</div>
+  <details class="dnsbl-details">
+    <summary>Show all 12 domain blacklist results</summary>
+    <table class="dnsbl-table">
+      <thead><tr><th></th><th>Blacklist</th><th>Category</th><th>Result</th></tr></thead>
+      <tbody><tr class="clean-row"><td>✅</td><td>0Spam Domain</td><td>0Spam</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Credit (CR)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Malware (MW)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>SURBL Multi</td><td>SURBL</td><td class="error-text">Error: All nameservers failed to answer the query click.kit-mail5.c</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Phish (PH)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Spam (SC)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="error-text">Error: blocked/open-resolver (127.255.255.254)</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Black</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Grey</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Multi</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Red</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
+    </table>
+  </details>
+</div>
+<div class="ip-card domain-card" id="domain-pool1-10">
+  <div class="ip-card-header">
+    <div class="ip-title">
+      <span class="ip-address domain-name">kit-mail6.com</span>
+      <span class="badge badge-clean">Clean</span>
+      <span class="pool-badge">Kit Mail</span>
+    </div>
+    <div class="score-ring" style="--score-color:#22c55e;">
+      <span class="score-number">100</span>
+      <span class="score-label">/ 100</span>
+    </div>
+  </div>
+  <div class="ip-meta">
+    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 8 clean &nbsp;·&nbsp; 12 total</span></div>
+  </div>
+  
+  
+<div class="vt-panel">
+  <div class="vt-header">
+    <span class="vt-logo">VirusTotal</span>
+    <span class="vt-meta">92 engines &nbsp;·&nbsp; Last scanned 2026-05-14</span>
+    <span class="vt-rep" style="color:#22c55e">Community score: +0</span>
+  </div>
+  <div class="vt-bar-wrap">
+    <div class="vt-bar">
+      <div class="vt-seg vt-mal" style="width:0%"></div>
+      <div class="vt-seg vt-sus" style="width:0%"></div>
+      <div class="vt-seg vt-har" style="width:65%"></div>
+      <div class="vt-seg vt-und" style="width:35%"></div>
+    </div>
+    <div class="vt-legend">
+      <span class="leg-dot leg-mal"></span>0 malicious &nbsp;
+      <span class="leg-dot leg-sus"></span>0 suspicious &nbsp;
+      <span class="leg-dot leg-har"></span>60 harmless &nbsp;
+      <span class="leg-dot leg-und"></span>32 undetected
+    </div>
+  </div>
+  <div class="vt-cats">Categories: <span>Ads/Analytics, Phishing (alphaMountain.ai), general business, business and economy</span></div>
+  
+</div>
+  <details class="dnsbl-details">
+    <summary>Show all 12 domain blacklist results</summary>
+    <table class="dnsbl-table">
+      <thead><tr><th></th><th>Blacklist</th><th>Category</th><th>Result</th></tr></thead>
+      <tbody><tr class="clean-row"><td>✅</td><td>0Spam Domain</td><td>0Spam</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Credit (CR)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Malware (MW)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>SURBL Multi</td><td>SURBL</td><td class="error-text">Error: All nameservers failed to answer the query kit-mail6.com.mul</td></tr><tr class="error-row"><td>⚠️</td><td>SURBL Phish (PH)</td><td>SURBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Spam (SC)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="error-text">Error: blocked/open-resolver (127.255.255.254)</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Black</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Grey</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Multi</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Red</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
+    </table>
+  </details>
+</div>
+<div class="ip-card domain-card" id="domain-pool1-11">
+  <div class="ip-card-header">
+    <div class="ip-title">
+      <span class="ip-address domain-name">click.kit-mail6.com</span>
+      <span class="badge badge-clean">Clean</span>
+      <span class="pool-badge">Kit Mail</span>
+    </div>
+    <div class="score-ring" style="--score-color:#22c55e;">
+      <span class="score-number">100</span>
+      <span class="score-label">/ 100</span>
+    </div>
+  </div>
+  <div class="ip-meta">
+    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 9 clean &nbsp;·&nbsp; 12 total</span></div>
+  </div>
+  
+  
+<div class="vt-panel">
+  <div class="vt-header">
+    <span class="vt-logo">VirusTotal</span>
+    <span class="vt-meta">92 engines &nbsp;·&nbsp; Last scanned 2026-05-18</span>
+    <span class="vt-rep" style="color:#22c55e">Community score: +0</span>
+  </div>
+  <div class="vt-bar-wrap">
+    <div class="vt-bar">
+      <div class="vt-seg vt-mal" style="width:0%"></div>
+      <div class="vt-seg vt-sus" style="width:0%"></div>
+      <div class="vt-seg vt-har" style="width:63%"></div>
+      <div class="vt-seg vt-und" style="width:37%"></div>
+    </div>
+    <div class="vt-legend">
+      <span class="leg-dot leg-mal"></span>0 malicious &nbsp;
+      <span class="leg-dot leg-sus"></span>0 suspicious &nbsp;
+      <span class="leg-dot leg-har"></span>58 harmless &nbsp;
+      <span class="leg-dot leg-und"></span>34 undetected
+    </div>
+  </div>
+  
+  
+</div>
+  <details class="dnsbl-details">
+    <summary>Show all 12 domain blacklist results</summary>
+    <table class="dnsbl-table">
+      <thead><tr><th></th><th>Blacklist</th><th>Category</th><th>Result</th></tr></thead>
+      <tbody><tr class="clean-row"><td>✅</td><td>0Spam Domain</td><td>0Spam</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Credit (CR)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Malware (MW)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>SURBL Multi</td><td>SURBL</td><td class="error-text">Error: All nameservers failed to answer the query click.kit-mail6.c</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Phish (PH)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>SURBL Spam (SC)</td><td>SURBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="error-text">Error: blocked/open-resolver (127.255.255.254)</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Black</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Grey</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Multi</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Red</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
+    </table>
+  </details>
+</div></div>
+</div>
+  </div>
+  <div class="section-divider" style="padding:0;">
+    <h2>IP Pools</h2>
+  </div>
+  <div id="ips-section" style="display:flex;flex-direction:column;gap:2.5rem;">
+    
+  </div>
+</div>
+
+<div class="footer">
+  IP &amp; Domain Reputation Checker &nbsp;·&nbsp; DNSBL/SURBL/URIBL + VirusTotal + ip-api.com
+</div>
+</body>
+</html>
