@@ -1,6 +1,4 @@
 config.json
 cron.log
 __pycache__/
-*.py
-requirements.txt
 reports/
