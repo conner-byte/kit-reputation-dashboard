@@ -150,6 +150,14 @@ _DNSBL_ERROR_RESPONSES = {
     "127.0.0.1",        # URIBL: query via public/open resolver (access denied)
     "127.0.0.254",      # URIBL: alternate open-resolver block code
     "127.0.0.255",      # generic DNSBL error sentinel
+    # Barracuda BRBL: unregistered resolver queries are redirected to Microsoft
+    # infrastructure instead of returning a real listing result
+    "13.107.253.70",
+    "13.107.226.70",
+    "13.107.246.70",
+    "13.107.213.70",
+    "150.171.110.146",
+    "150.171.110.147",
 }
 
 
