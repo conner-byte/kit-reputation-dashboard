@@ -183,6 +183,23 @@ def _vt_wait():
         _vt_last_call_time = time.monotonic()
 
 # ──────────────────────────────────────────────────────────────────────────────
+# Slack alerts
+# ──────────────────────────────────────────────────────────────────────────────
+
+def send_slack_alert(webhook_url: str, message: str):
+    if not webhook_url:
+        return
+    try:
+        payload = json.dumps({"text": message}).encode()
+        req = urllib.request.Request(
+            webhook_url, data=payload,
+            headers={"Content-Type": "application/json"}, method="POST"
+        )
+        urllib.request.urlopen(req, timeout=10)
+    except Exception:
+        pass  # never crash the main process on a Slack failure
+
+# ──────────────────────────────────────────────────────────────────────────────
 # Data fetching — shared
 # ──────────────────────────────────────────────────────────────────────────────
 
@@ -302,6 +319,35 @@ def fetch_ip_geo(ip: str, timeout: int) -> dict:
     return info
 
 
+def fetch_abuseipdb(ip: str, api_key: str, timeout: int) -> dict:
+    result = {"available": False, "error": None, "score": None,
+              "total_reports": 0, "last_reported": None, "usage_type": None,
+              "is_whitelisted": False}
+    if not api_key:
+        return result
+    try:
+        url = f"https://api.abuseipdb.com/api/v2/check?ipAddress={ip}&maxAgeInDays=90"
+        req = urllib.request.Request(url, headers={
+            "Key": api_key, "Accept": "application/json",
+            "User-Agent": "ip-reputation-checker/1.0",
+        })
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            data = json.loads(resp.read().decode()).get("data", {})
+        result.update({
+            "available":      True,
+            "score":          data.get("abuseConfidenceScore", 0),
+            "total_reports":  data.get("totalReports", 0),
+            "last_reported":  (data.get("lastReportedAt") or "")[:10] or None,
+            "usage_type":     data.get("usageType"),
+            "is_whitelisted": data.get("isWhitelisted", False),
+        })
+    except urllib.error.HTTPError as e:
+        result["error"] = f"HTTP {e.code}"
+    except Exception as e:
+        result["error"] = str(e)[:80]
+    return result
+
+
 def check_ip_dnsbl_geo(ip: str, timeout: int) -> dict:
     with concurrent.futures.ThreadPoolExecutor(max_workers=28) as ex:
         dnsbl_futures = {ex.submit(check_ip_dnsbl, ip, bl, timeout): bl for bl in IP_DNSBLS}
@@ -317,7 +363,7 @@ def check_ip_dnsbl_geo(ip: str, timeout: int) -> dict:
         "listed_count": len(listed), "clean_count": len(clean),
         "error_count":  len(errors), "total_checked": len(IP_DNSBLS),
         "listings": listed, "errors": errors, "all_results": dnsbl_results,
-        "vt": {"available": False},
+        "vt": {"available": False}, "abuseipdb": {"available": False},
     }
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -606,6 +652,32 @@ def render_domain_card(result: dict, card_id: str) -> str:
 # HTML — IP cards
 # ──────────────────────────────────────────────────────────────────────────────
 
+def render_abuseipdb_panel(abip: dict) -> str:
+    if not abip.get("available"):
+        if abip.get("error"):
+            return f'<div class="abip-panel abip-error"><span class="abip-logo">AbuseIPDB</span> Error: {abip["error"]}</div>'
+        return ""
+    score     = abip["score"]
+    bar_color = "#22c55e" if score < 10 else ("#f59e0b" if score < 40 else "#ef4444")
+    rep_str   = f"{score}% abuse confidence"
+    reports   = abip["total_reports"]
+    last      = f" &nbsp;·&nbsp; Last reported {abip['last_reported']}" if abip["last_reported"] else ""
+    usage     = f'<div class="abip-usage">Usage type: <span>{abip["usage_type"]}</span></div>' if abip["usage_type"] else ""
+    wl        = ' <span class="abip-wl">✓ Whitelisted</span>' if abip["is_whitelisted"] else ""
+    return f"""
+<div class="abip-panel">
+  <div class="abip-header">
+    <span class="abip-logo">AbuseIPDB</span>
+    <span class="abip-meta">{reports} report{"s" if reports != 1 else ""}{last}</span>
+    <span class="abip-score" style="color:{bar_color}">{rep_str}{wl}</span>
+  </div>
+  <div class="abip-bar-wrap">
+    <div class="abip-bar"><div class="abip-fill" style="width:{score}%;background:{bar_color}"></div></div>
+  </div>
+  {usage}
+</div>"""
+
+
 def render_ip_card(result: dict, card_id: str) -> str:
     ip    = result["ip"]
     info  = result["info"]
@@ -613,6 +685,7 @@ def render_ip_card(result: dict, card_id: str) -> str:
     color = score_color(score)
 
     vt_panel    = render_vt_panel(result["vt"])
+    abip_panel  = render_abuseipdb_panel(result.get("abuseipdb", {}))
     listing_sec = render_listing_alert(result["listings"], "DNSBL")
     dnsbl_rows  = "".join(render_dnsbl_row(r) for r in result["all_results"])
     label       = result.get("label", "")
@@ -637,6 +710,7 @@ def render_ip_card(result: dict, card_id: str) -> str:
   </div>
   {listing_sec}
   {vt_panel}
+  {abip_panel}
   <details class="dnsbl-details">
     <summary>Show all {result['total_checked']} DNSBL results</summary>
     <table class="dnsbl-table">
@@ -823,6 +897,19 @@ def generate_html(domain_groups: list, ip_groups: list, generated_at: datetime.d
     .removal-link:hover {{ color: #93c5fd; text-decoration: underline; }}
     .fp-email {{ font-size: 0.7rem; color: #94a3b8; font-family: monospace; user-select: all; white-space: nowrap; }}
 
+    /* AbuseIPDB panel */
+    .abip-panel {{ margin: 1rem 1.5rem 0; background: #0f1e35; border: 1px solid #1e3a5f; border-left: 4px solid #8b5cf6; border-radius: 8px; padding: 0.875rem 1.25rem; }}
+    .abip-panel.abip-error {{ color: #94a3b8; font-size: 0.82rem; }}
+    .abip-header {{ display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 0.5rem; }}
+    .abip-logo {{ font-weight: 700; font-size: 0.82rem; color: #a78bfa; letter-spacing: 0.02em; }}
+    .abip-meta {{ font-size: 0.72rem; color: #64748b; }}
+    .abip-score {{ font-size: 0.78rem; font-weight: 600; margin-left: auto; }}
+    .abip-wl {{ color: #22c55e; font-weight: 500; margin-left: 0.4rem; }}
+    .abip-bar {{ height: 9px; border-radius: 999px; background: #1e293b; overflow: hidden; margin-bottom: 0.3rem; }}
+    .abip-fill {{ height: 100%; border-radius: 999px; }}
+    .abip-usage {{ font-size: 0.72rem; color: #64748b; margin-top: 0.3rem; }}
+    .abip-usage span {{ color: #94a3b8; }}
+
     .footer {{ text-align: center; padding: 2rem; color: #475569; font-size: 0.8rem; }}
   </style>
 </head>
@@ -918,7 +1005,19 @@ def group_by_label(entries: list[dict]) -> list[tuple[str, list]]:
     return list(seen.items())
 
 
-def publish_to_github(repo_dir: Path, latest_path: Path, now: datetime.datetime):
+def load_from_csv(csv_path: Path, key: str) -> list[dict]:
+    import csv
+    entries = []
+    with open(csv_path, newline="", encoding="utf-8") as f:
+        for row in csv.DictReader(f):
+            val = row.get(key, "").strip()
+            if val:
+                entries.append({key: val, "label": (row.get("label") or "").strip()})
+    return entries
+
+
+def publish_to_github(repo_dir: Path, latest_path: Path, now: datetime.datetime,
+                      slack_url: str = ""):
     import subprocess
 
     index_path = repo_dir / "index.html"
@@ -942,26 +1041,58 @@ def publish_to_github(repo_dir: Path, latest_path: Path, now: datetime.datetime)
     if code == 0:
         print("  GitHub Pages: published → https://conner-byte.github.io/kit-reputation-dashboard/")
     else:
-        print(f"  GitHub Pages: push failed — {out}")
+        msg = f"  GitHub Pages: push failed — {out}"
+        print(msg)
+        send_slack_alert(slack_url, f"🔴 *Reputation checker — GitHub push failed*\n```{out[:400]}```")
 
 
 def main():
-    import sys
-    args           = set(sys.argv[1:])
-    domains_only   = "--domains-only" in args
-    ips_only       = "--ips-only"     in args
+    import sys, traceback
+    args         = set(sys.argv[1:])
+    domains_only = "--domains-only" in args
+    ips_only     = "--ips-only"     in args
 
     script_dir = Path(__file__).parent
     with open(script_dir / "config.json") as f:
         config = json.load(f)
 
-    ip_entries     = [] if domains_only else parse_ip_entries(config.get("ips", []))
-    domain_entries = [] if ips_only     else parse_domain_entries(config.get("domains", []))
-    timeout        = config.get("timeout_seconds", 10)
+    slack_url      = config.get("slack_webhook_url", "")
     vt_key         = config.get("virustotal_api_key", "")
     dqs_key        = config.get("spamhaus_dqs_key", "")
+    abuseipdb_key  = config.get("abuseipdb_api_key", "")
+    timeout        = config.get("timeout_seconds", 10)
     report_dir     = script_dir / config.get("report_dir", "reports")
     report_dir.mkdir(exist_ok=True)
+
+    # ── Load IPs and domains — CSV takes priority over config.json ───────────
+    ips_csv     = script_dir / "ips.csv"
+    domains_csv = script_dir / "domains.csv"
+
+    if not domains_only:
+        ip_entries = (load_from_csv(ips_csv, "ip") if ips_csv.exists()
+                      else parse_ip_entries(config.get("ips", [])))
+    else:
+        ip_entries = []
+
+    if not ips_only:
+        domain_entries = (load_from_csv(domains_csv, "domain") if domains_csv.exists()
+                          else parse_domain_entries(config.get("domains", [])))
+    else:
+        domain_entries = []
+
+    try:
+        _run(config, ip_entries, domain_entries, slack_url, vt_key, dqs_key,
+             abuseipdb_key, timeout, report_dir, script_dir)
+    except Exception:
+        tb = traceback.format_exc()
+        now_str = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+        send_slack_alert(slack_url,
+            f"🔴 *Reputation checker crashed* — {now_str}\n```{tb[-600:]}```")
+        raise
+
+
+def _run(config, ip_entries, domain_entries, slack_url, vt_key, dqs_key,
+         abuseipdb_key, timeout, report_dir, script_dir):
 
     if dqs_key:
         for bl in IP_DNSBLS:
@@ -976,31 +1107,60 @@ def main():
     unique_domains = list(dict.fromkeys(e["domain"] for e in domain_entries))
     total_vt       = len(unique_ips) + len(unique_domains)
 
-    now_str  = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    now_str   = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     dnsbl_src = f"{len(IP_DNSBLS)} IP DNSBLs + {len(DOMAIN_DNSBLS)} domain DNSBLs"
     print(f"IP & Domain Reputation Checker — {now_str}")
     print(f"  {len(unique_ips)} unique IPs  |  {len(unique_domains)} domains  |  {dnsbl_src}")
+    if abuseipdb_key:
+        print(f"  AbuseIPDB: {len(unique_ips)} IP checks (parallel)")
     if vt_key:
         est = round(total_vt * VT_INTERVAL / 60, 1)
         print(f"  VirusTotal: {total_vt} resources → ~{est} min (rate-limited)\n")
 
-    # ── Phase 1: DNSBL + geo/DNS — all resources in parallel ──────────────────
+    # ── Phase 1: DNSBL + geo + AbuseIPDB — parallel ───────────────────────────
     print("Phase 1: DNSBL + DNS checks (parallel)...")
     ip_data:     dict[str, dict] = {}
     domain_data: dict[str, dict] = {}
+    abip_data:   dict[str, dict] = {}
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=min(len(unique_ips) + len(unique_domains), 15)) as ex:
-        ip_futures  = {ex.submit(check_ip_dnsbl_geo,          ip,  timeout): ("ip",  ip)  for ip  in unique_ips}
-        dom_futures = {ex.submit(check_domain_dnsbl_and_dns, dom,  timeout): ("dom", dom) for dom in unique_domains}
-        for future in concurrent.futures.as_completed({**ip_futures, **dom_futures}):
-            kind, key = ({**ip_futures, **dom_futures}[future])
+    workers = min(len(unique_ips) + len(unique_domains) + len(unique_ips if abuseipdb_key else []), 20)
+    with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as ex:
+        ip_futures   = {ex.submit(check_ip_dnsbl_geo,         ip,  timeout): ("ip",   ip)  for ip  in unique_ips}
+        dom_futures  = {ex.submit(check_domain_dnsbl_and_dns, dom, timeout): ("dom",  dom) for dom in unique_domains}
+        abip_futures = ({ex.submit(fetch_abuseipdb, ip, abuseipdb_key, timeout): ("abip", ip) for ip in unique_ips}
+                        if abuseipdb_key else {})
+        all_futures  = {**ip_futures, **dom_futures, **abip_futures}
+        for future in concurrent.futures.as_completed(all_futures):
+            kind, key = all_futures[future]
             result    = future.result()
             if kind == "ip":
                 ip_data[key] = result
                 print(f"  IP  {key}: {result['listed_count']} DNSBL listings", flush=True)
-            else:
+            elif kind == "dom":
                 domain_data[key] = result
                 print(f"  DOM {key}: {result['listed_count']} listings", flush=True)
+            else:
+                abip_data[key] = result
+
+    for ip, abip in abip_data.items():
+        if ip in ip_data:
+            ip_data[ip]["abuseipdb"] = abip
+
+    # ── Spamhaus alert — fires immediately after DNSBL results ────────────────
+    if slack_url:
+        sh_hits = []
+        for ip, data in ip_data.items():
+            hits = [r["name"] for r in data["listings"] if r["category"] == "Spamhaus"]
+            if hits:
+                sh_hits.append(f"IP {ip}: {', '.join(hits)}")
+        for dom, data in domain_data.items():
+            hits = [r["name"] for r in data["listings"] if r["category"] == "Spamhaus"]
+            if hits:
+                sh_hits.append(f"Domain {dom}: {', '.join(hits)}")
+        if sh_hits:
+            send_slack_alert(slack_url,
+                f"🚨 *Spamhaus listing detected* — {now_str}\n" +
+                "\n".join(f"• {h}" for h in sh_hits))
 
     # ── Phase 2: VirusTotal — sequential, rate-limited ────────────────────────
     if vt_key:
@@ -1052,7 +1212,7 @@ def main():
     print(f"  Archive: {dated_path}")
 
     # ── Publish to GitHub Pages ────────────────────────────────────────────────
-    publish_to_github(script_dir, latest_path, now)
+    publish_to_github(script_dir, latest_path, now, slack_url)
 
     # ── Terminal summary ───────────────────────────────────────────────────────
     print("\n" + "═" * 72)
