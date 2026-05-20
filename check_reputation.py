@@ -868,8 +868,9 @@ def render_domain_card(result: dict, card_id: str) -> str:
     listing_sec = render_listing_alert(result["listings"], "Domain DNSBL")
     dnsbl_rows  = "".join(render_dnsbl_row(r) for r in result["all_results"])
 
+    label_safe = label.replace('"', '&quot;')
     return f"""
-<div class="ip-card domain-card" id="{card_id}">
+<div class="ip-card domain-card" id="{card_id}" data-status="{status}" data-resource="{domain}" data-label="{label_safe}">
   <div class="ip-card-header">
     <div class="ip-title">
       <span class="ip-address domain-name">{domain}</span>
@@ -937,8 +938,9 @@ def render_ip_card(result: dict, card_id: str) -> str:
     dnsbl_rows  = "".join(render_dnsbl_row(r) for r in result["all_results"])
     label       = result.get("label", "")
 
+    label_safe = label.replace('"', '&quot;')
     return f"""
-<div class="ip-card" id="{card_id}">
+<div class="ip-card" id="{card_id}" data-status="{result['status']}" data-resource="{ip}" data-label="{label_safe}">
   <div class="ip-card-header">
     <div class="ip-title">
       <span class="ip-address">{ip}</span>
@@ -971,8 +973,28 @@ def render_ip_card(result: dict, card_id: str) -> str:
 # HTML — full page
 # ──────────────────────────────────────────────────────────────────────────────
 
+def _render_run_meta_bar(meta: dict) -> str:
+    if not meta:
+        return ""
+    dur   = meta.get("duration_s", 0)
+    derr  = meta.get("dnsbl_error_count", 0)
+    verr  = meta.get("vt_error_count", 0)
+    quick = meta.get("quick_mode", False)
+    dur_str  = f"{dur:.0f}s" if dur < 60 else f"{dur/60:.1f}m"
+    derr_cls = "run-meta-ok" if derr == 0 else ("run-meta-warn" if derr < 10 else "run-meta-err")
+    verr_cls = "run-meta-ok" if verr == 0 else "run-meta-warn"
+    quick_tag = ' &nbsp;·&nbsp; <span class="run-meta-warn">⚡ quick mode (VT skipped)</span>' if quick else ""
+    return (f'<div class="run-meta-bar">'
+            f'<span>⏱ Completed in {dur_str}</span>'
+            f'<span class="run-meta-sep">·</span>'
+            f'<span class="{derr_cls}">{derr} DNSBL check error{"s" if derr != 1 else ""}</span>'
+            f'<span class="run-meta-sep">·</span>'
+            f'<span class="{verr_cls}">{verr} VT error{"s" if verr != 1 else ""}</span>'
+            f'{quick_tag}</div>')
+
+
 def generate_html(domain_groups: list, ip_groups: list, generated_at: datetime.datetime,
-                  snapshots: list = None) -> str:
+                  snapshots: list = None, run_meta: dict = None) -> str:
     all_domains = [r for _, g in domain_groups for r in g]
     all_ips     = [r for _, g in ip_groups     for r in g]
     all_results = all_domains + all_ips
@@ -1158,6 +1180,28 @@ def generate_html(domain_groups: list, ip_groups: list, generated_at: datetime.d
     .abip-usage {{ font-size: 0.72rem; color: #64748b; margin-top: 0.3rem; }}
     .abip-usage span {{ color: #94a3b8; }}
 
+    /* Filter bar */
+    .filter-bar {{ display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 2rem; background: #0a1120; border-bottom: 1px solid #1e293b; flex-wrap: wrap; }}
+    .filter-label {{ font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; white-space: nowrap; }}
+    .filter-status-btns {{ display: flex; gap: 0.35rem; flex-wrap: wrap; }}
+    .filter-btn {{ padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.75rem; font-weight: 500; background: #1e293b; border: 1px solid #334155; color: #94a3b8; cursor: pointer; transition: all 0.15s; white-space: nowrap; }}
+    .filter-btn:hover {{ border-color: #60a5fa; color: #60a5fa; }}
+    .filter-btn.active {{ background: #1e3a5f; border-color: #60a5fa; color: #93c5fd; }}
+    .filter-clean.active  {{ background: #052e16; border-color: #166534; color: #4ade80; }}
+    .filter-warn.active   {{ background: #1c1009; border-color: #78350f; color: #fbbf24; }}
+    .filter-danger.active {{ background: #1a0505; border-color: #7f1d1d; color: #fca5a5; }}
+    .filter-search {{ flex: 1; min-width: 200px; max-width: 320px; padding: 0.3rem 0.75rem; background: #1e293b; border: 1px solid #334155; border-radius: 999px; color: #e2e8f0; font-size: 0.8rem; outline: none; }}
+    .filter-search:focus {{ border-color: #60a5fa; }}
+    .filter-search::placeholder {{ color: #475569; }}
+    .filter-count {{ font-size: 0.72rem; color: #64748b; white-space: nowrap; margin-left: auto; }}
+
+    /* Run metadata bar */
+    .run-meta-bar {{ display: flex; align-items: center; gap: 0.5rem; padding: 0.45rem 2rem; background: #0a1120; border-bottom: 1px solid #1e293b; font-size: 0.72rem; color: #475569; flex-wrap: wrap; }}
+    .run-meta-sep {{ color: #1e293b; }}
+    .run-meta-ok  {{ color: #22c55e; }}
+    .run-meta-warn {{ color: #f59e0b; }}
+    .run-meta-err  {{ color: #ef4444; }}
+
     /* History tab */
     .history-empty {{ color: #64748b; font-style: italic; padding: 2rem; }}
     .history-section {{ margin-bottom: 2.5rem; }}
@@ -1215,6 +1259,8 @@ def generate_html(domain_groups: list, ip_groups: list, generated_at: datetime.d
   <div class="stat-card stat-danger"><div class="stat-val">{danger_all}</div><div class="stat-label">Blacklisted</div></div>
 </div>
 
+{_render_run_meta_bar(run_meta)}
+
 <div class="tab-bar">
   <button class="tab-btn active" onclick="switchTab('domains', this)">
     Domains <span class="tab-count">{len(all_domains)}</span>
@@ -1225,6 +1271,18 @@ def generate_html(domain_groups: list, ip_groups: list, generated_at: datetime.d
   <button class="tab-btn" onclick="switchTab('history', this)">
     History <span class="tab-count">{len(snapshots) if snapshots else 0}</span>
   </button>
+</div>
+
+<div class="filter-bar" id="filter-bar">
+  <span class="filter-label">Filter:</span>
+  <div class="filter-status-btns">
+    <button class="filter-btn active" data-status="" onclick="setStatusFilter(this)">All</button>
+    <button class="filter-btn filter-clean"  data-status="clean"   onclick="setStatusFilter(this)">✅ Clean</button>
+    <button class="filter-btn filter-warn"   data-status="warning" onclick="setStatusFilter(this)">⚠ Warning</button>
+    <button class="filter-btn filter-danger" data-status="danger"  onclick="setStatusFilter(this)">🔴 Blacklisted</button>
+  </div>
+  <input class="filter-search" id="filter-search" type="text" placeholder="Search IP, domain, or pool…" oninput="applyFilter()">
+  <span class="filter-count" id="filter-count"></span>
 </div>
 
 <div id="tab-domains" class="tab-panel active">
@@ -1252,12 +1310,58 @@ def generate_html(domain_groups: list, ip_groups: list, generated_at: datetime.d
 </div>
 
 <script>
+  let _activeStatus = '';
+
   function switchTab(name, btn) {{
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.getElementById('tab-' + name).classList.add('active');
     btn.classList.add('active');
+    const filterBar = document.getElementById('filter-bar');
+    if (filterBar) filterBar.style.display = name === 'history' ? 'none' : '';
+    // Reset filter state on tab switch
+    _activeStatus = '';
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    const allBtn = document.querySelector('.filter-btn[data-status=""]');
+    if (allBtn) allBtn.classList.add('active');
+    const searchEl = document.getElementById('filter-search');
+    if (searchEl) searchEl.value = '';
+    const countEl = document.getElementById('filter-count');
+    if (countEl) countEl.textContent = '';
+    // Show all cards in new tab
+    document.querySelectorAll('[data-resource]').forEach(c => c.style.display = '');
+    document.querySelectorAll('.pool-section').forEach(p => p.style.display = '');
     window.scrollTo({{top: 0, behavior: 'smooth'}});
+  }}
+
+  function setStatusFilter(btn) {{
+    _activeStatus = btn.dataset.status;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    applyFilter();
+  }}
+
+  function applyFilter() {{
+    const search = (document.getElementById('filter-search').value || '').toLowerCase().trim();
+    const activeTab = document.querySelector('.tab-panel.active');
+    if (!activeTab || activeTab.id === 'tab-history') return;
+    let visible = 0, total = 0;
+    activeTab.querySelectorAll('[data-resource]').forEach(card => {{
+      total++;
+      const matchStatus = !_activeStatus || card.dataset.status === _activeStatus;
+      const matchSearch = !search ||
+        card.dataset.resource.toLowerCase().includes(search) ||
+        (card.dataset.label || '').toLowerCase().includes(search);
+      const show = matchStatus && matchSearch;
+      card.style.display = show ? '' : 'none';
+      if (show) visible++;
+    }});
+    activeTab.querySelectorAll('.pool-section').forEach(pool => {{
+      const any = [...pool.querySelectorAll('[data-resource]')].some(c => c.style.display !== 'none');
+      pool.style.display = any ? '' : 'none';
+    }});
+    const countEl = document.getElementById('filter-count');
+    if (countEl) countEl.textContent = (search || _activeStatus) ? `${{visible}} / ${{total}} shown` : '';
   }}
 </script>
 
@@ -1311,6 +1415,57 @@ def load_from_csv(csv_path: Path, key: str) -> list[dict]:
     return entries
 
 
+def write_data_json(repo_dir: Path, domain_groups: list, ip_groups: list,
+                    generated_at: datetime.datetime, run_meta: dict = None):
+    domains_out = []
+    for _, group in domain_groups:
+        for r in group:
+            vt = r.get("vt", {})
+            domains_out.append({
+                "domain":       r["domain"],
+                "label":        r.get("label", ""),
+                "score":        r["score"],
+                "status":       r["status"],
+                "listed_count": r["listed_count"],
+                "listings":     [x["name"] for x in r["listings"]],
+                "vt_malicious": vt.get("malicious") if vt.get("available") else None,
+                "vt_suspicious":vt.get("suspicious") if vt.get("available") else None,
+            })
+    ips_out = []
+    for _, group in ip_groups:
+        for r in group:
+            vt   = r.get("vt", {})
+            abip = r.get("abuseipdb", {})
+            ips_out.append({
+                "ip":             r["ip"],
+                "label":          r.get("label", ""),
+                "score":          r["score"],
+                "status":         r["status"],
+                "listed_count":   r["listed_count"],
+                "listings":       [x["name"] for x in r["listings"]],
+                "vt_malicious":   vt.get("malicious")  if vt.get("available") else None,
+                "vt_suspicious":  vt.get("suspicious") if vt.get("available") else None,
+                "abuseipdb_score":abip.get("score")    if abip.get("available") else None,
+            })
+    all_results = domains_out + ips_out
+    payload = {
+        "generated_at":   generated_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "run_duration_s": round(run_meta.get("duration_s", 0), 1) if run_meta else None,
+        "quick_mode":     run_meta.get("quick_mode", False) if run_meta else False,
+        "summary": {
+            "total":   len(all_results),
+            "clean":   sum(1 for r in all_results if r["status"] == "clean"),
+            "warning": sum(1 for r in all_results if r["status"] == "warning"),
+            "danger":  sum(1 for r in all_results if r["status"] == "danger"),
+        },
+        "domains": domains_out,
+        "ips":     ips_out,
+    }
+    (repo_dir / "data.json").write_text(
+        json.dumps(payload, separators=(",", ":")), encoding="utf-8"
+    )
+
+
 def publish_to_github(repo_dir: Path, latest_path: Path, now: datetime.datetime,
                       slack_url: str = ""):
     import subprocess
@@ -1325,6 +1480,7 @@ def publish_to_github(repo_dir: Path, latest_path: Path, now: datetime.datetime,
 
     git(["add", "index.html"])
     git(["add", "snapshots/"])
+    git(["add", "data.json"])
     code, out = git(["commit", "-m", f"dashboard update {now.strftime('%Y-%m-%d %H:%M UTC')}"])
     if "nothing to commit" in out:
         print("  GitHub Pages: no changes to publish")
@@ -1347,6 +1503,7 @@ def main():
     args         = set(sys.argv[1:])
     domains_only = "--domains-only" in args
     ips_only     = "--ips-only"     in args
+    quick_mode   = "--quick"        in args
 
     script_dir = Path(__file__).parent
     with open(script_dir / "config.json") as f:
@@ -1378,7 +1535,7 @@ def main():
 
     try:
         _run(config, ip_entries, domain_entries, slack_url, vt_key, dqs_key,
-             abuseipdb_key, timeout, report_dir, script_dir)
+             abuseipdb_key, timeout, report_dir, script_dir, skip_vt=quick_mode)
     except Exception:
         tb = traceback.format_exc()
         now_str = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
@@ -1388,7 +1545,9 @@ def main():
 
 
 def _run(config, ip_entries, domain_entries, slack_url, vt_key, dqs_key,
-         abuseipdb_key, timeout, report_dir, script_dir):
+         abuseipdb_key, timeout, report_dir, script_dir, skip_vt: bool = False):
+
+    run_start = time.monotonic()
 
     if dqs_key:
         for bl in IP_DNSBLS:
@@ -1459,7 +1618,8 @@ def _run(config, ip_entries, domain_entries, slack_url, vt_key, dqs_key,
                 "\n".join(f"• {h}" for h in sh_hits))
 
     # ── Phase 2: VirusTotal — sequential, rate-limited ────────────────────────
-    if vt_key:
+    vt_error_count = 0
+    if vt_key and not skip_vt:
         total_vt_checks = len(unique_ips) + len(unique_domains)
         print(f"\nPhase 2: VirusTotal ({total_vt_checks} checks, ~{VT_INTERVAL}s apart)...")
         idx = 1
@@ -1467,14 +1627,20 @@ def _run(config, ip_entries, domain_entries, slack_url, vt_key, dqs_key,
             print(f"  [{idx}/{total_vt_checks}] {domain} VT...", end=" ", flush=True)
             vt = fetch_virustotal(domain, "domains", vt_key, timeout)
             domain_data[domain]["vt"] = vt
+            if not vt["available"]:
+                vt_error_count += 1
             print(f"{vt['malicious']}M/{vt['suspicious']}S" if vt["available"] else f"error: {vt['error']}", flush=True)
             idx += 1
         for ip in unique_ips:
             print(f"  [{idx}/{total_vt_checks}] {ip} VT...", end=" ", flush=True)
             vt = fetch_virustotal(ip, "ip_addresses", vt_key, timeout)
             ip_data[ip]["vt"] = vt
+            if not vt["available"]:
+                vt_error_count += 1
             print(f"{vt['malicious']}M/{vt['suspicious']}S" if vt["available"] else f"error: {vt['error']}", flush=True)
             idx += 1
+    elif skip_vt:
+        print("\nPhase 2: VirusTotal skipped (--quick mode)")
 
     # ── Score + assemble ───────────────────────────────────────────────────────
     for r in {**ip_data, **domain_data}.values():
@@ -1502,8 +1668,21 @@ def _run(config, ip_entries, domain_entries, slack_url, vt_key, dqs_key,
     snapshots = load_snapshots(snapshot_dir)
     print(f"  Snapshots: {len(snapshots)} day(s) of history saved")
 
+    # ── Build run metadata ─────────────────────────────────────────────────────
+    dnsbl_error_count = sum(r["error_count"] for r in ip_data.values()) + \
+                        sum(r["error_count"] for r in domain_data.values())
+    run_meta = {
+        "duration_s":        time.monotonic() - run_start,
+        "dnsbl_error_count": dnsbl_error_count,
+        "vt_error_count":    vt_error_count,
+        "quick_mode":        skip_vt,
+    }
+
+    # ── Write data.json API file ───────────────────────────────────────────────
+    write_data_json(script_dir, domain_groups, ip_groups, now, run_meta)
+
     # ── Generate report ────────────────────────────────────────────────────────
-    html        = generate_html(domain_groups, ip_groups, now, snapshots)
+    html        = generate_html(domain_groups, ip_groups, now, snapshots, run_meta)
     latest_path = report_dir / "latest.html"
     dated_path  = report_dir / f"report_{now.strftime('%Y%m%d_%H%M%S')}.html"
     latest_path.write_text(html, encoding="utf-8")
