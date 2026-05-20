@@ -451,6 +451,253 @@ def compute_score(result: dict) -> tuple[int, str]:
 # HTML helpers — shared
 # ──────────────────────────────────────────────────────────────────────────────
 
+def save_snapshot(snapshot_dir: Path, now: datetime.datetime,
+                  ip_data: dict, domain_data: dict,
+                  ip_entries: list, domain_entries: list) -> Path:
+    snapshot_dir.mkdir(exist_ok=True)
+    ips_out = {}
+    for e in ip_entries:
+        ip = e["ip"]
+        if ip not in ip_data:
+            continue
+        d = ip_data[ip]
+        abip = d.get("abuseipdb", {})
+        vt   = d.get("vt", {})
+        ips_out[ip] = {
+            "label":    e["label"],
+            "score":    d["score"],
+            "status":   d["status"],
+            "n_listed": d["listed_count"],
+            "listings": [r["name"] for r in d["listings"]],
+            "vt_mal":   vt["malicious"]  if vt.get("available") else None,
+            "vt_sus":   vt["suspicious"] if vt.get("available") else None,
+            "abip":     abip.get("score"),
+        }
+    domains_out = {}
+    for e in domain_entries:
+        dom = e["domain"]
+        if dom not in domain_data:
+            continue
+        d  = domain_data[dom]
+        vt = d.get("vt", {})
+        domains_out[dom] = {
+            "label":    e["label"],
+            "score":    d["score"],
+            "status":   d["status"],
+            "n_listed": d["listed_count"],
+            "listings": [r["name"] for r in d["listings"]],
+            "vt_mal":   vt["malicious"]  if vt.get("available") else None,
+            "vt_sus":   vt["suspicious"] if vt.get("available") else None,
+        }
+    snap = {"date": now.strftime("%Y-%m-%d"), "ts": now.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "ips": ips_out, "domains": domains_out}
+    path = snapshot_dir / f"{now.strftime('%Y-%m-%d')}.json"
+    path.write_text(json.dumps(snap, separators=(",", ":")), encoding="utf-8")
+    return path
+
+
+def load_snapshots(snapshot_dir: Path, max_days: int = 90) -> list:
+    if not snapshot_dir.exists():
+        return []
+    files = sorted(snapshot_dir.glob("*.json"))[-max_days:]
+    out = []
+    for f in files:
+        try:
+            out.append(json.loads(f.read_text(encoding="utf-8")))
+        except Exception:
+            pass
+    return out
+
+
+def sparkline_svg(values: list, width: int = 80, height: int = 24, color: str = "#60a5fa") -> str:
+    if len(values) < 2:
+        return f'<svg width="{width}" height="{height}"></svg>'
+    vmin, vmax = min(values), max(values)
+    rng  = max(vmax - vmin, 1)
+    step = width / max(len(values) - 1, 1)
+    pts  = " ".join(
+        f"{i*step:.1f},{height - 2 - ((v-vmin)/rng)*(height-4):.1f}"
+        for i, v in enumerate(values)
+    )
+    return (f'<svg width="{width}" height="{height}" viewBox="0 0 {width} {height}">'
+            f'<polyline points="{pts}" fill="none" stroke="{color}" '
+            f'stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>')
+
+
+def generate_history_html(snapshots: list) -> str:
+    if not snapshots:
+        return ('<div class="content"><p class="history-empty">'
+                'No history yet — will appear after the first run.</p></div>')
+
+    dates   = [s["date"] for s in snapshots]
+    n_days  = len(dates)
+    today   = snapshots[-1]
+    yest    = snapshots[-2] if n_days >= 2 else None
+
+    # ── Aggregate per-resource stats ──────────────────────────────────────────
+    all_res   = {}   # key -> {type, label, days_listed, listing_events, scores, last_listings}
+    dnsbl_freq = {}  # bl_name -> {count, resources: set}
+
+    for snap in snapshots:
+        for res_type, section in (("IP", "ips"), ("Domain", "domains")):
+            for key, d in snap.get(section, {}).items():
+                if key not in all_res:
+                    all_res[key] = {"type": res_type, "label": d.get("label", ""),
+                                    "days_listed": 0, "listing_events": 0,
+                                    "scores": [], "last_listings": []}
+                all_res[key]["scores"].append(d.get("score", 0))
+                bls = d.get("listings", [])
+                if bls:
+                    all_res[key]["days_listed"]     += 1
+                    all_res[key]["listing_events"]  += len(bls)
+                if snap is today:
+                    all_res[key]["last_listings"] = bls
+                for bl in bls:
+                    dnsbl_freq.setdefault(bl, {"count": 0, "resources": set()})
+                    dnsbl_freq[bl]["count"] += 1
+                    dnsbl_freq[bl]["resources"].add(key)
+
+    total_events   = sum(d["listing_events"] for d in all_res.values())
+    currently_listed = sum(1 for d in all_res.values() if d["last_listings"])
+
+    # ── Changes since yesterday ───────────────────────────────────────────────
+    new_list, res_list = [], []
+    if yest:
+        for section in ("ips", "domains"):
+            for key, td in today.get(section, {}).items():
+                yd       = yest.get(section, {}).get(key, {})
+                t_bls, y_bls = set(td.get("listings",[])), set(yd.get("listings",[]))
+                label    = td.get("label", "")
+                res_type = "IP" if section == "ips" else "Domain"
+                for bl in t_bls - y_bls:
+                    new_list.append({"key": key, "label": label, "type": res_type, "bl": bl})
+                for bl in y_bls - t_bls:
+                    res_list.append({"key": key, "label": label, "type": res_type, "bl": bl})
+
+    nc = len(new_list); rc = len(res_list)
+    new_color = "#ef4444" if nc > 0 else "#22c55e"
+    res_color = "#22c55e" if rc > 0 else "#94a3b8"
+    cur_color = "#ef4444" if currently_listed > 0 else "#22c55e"
+
+    overview = f"""
+<div class="summary-bar" style="padding-top:1.5rem;">
+  <div class="stat-card"><div class="stat-val" style="color:#60a5fa">{n_days}</div><div class="stat-label">Days Tracked</div></div>
+  <div class="stat-card"><div class="stat-val" style="color:#94a3b8">{total_events}</div><div class="stat-label">Total Listing Events</div></div>
+  <div class="stat-card"><div class="stat-val" style="color:{cur_color}">{currently_listed}</div><div class="stat-label">Currently Listed</div></div>
+  <div class="stat-card"><div class="stat-val" style="color:{new_color}">{nc}</div><div class="stat-label">New Since Yesterday</div></div>
+  <div class="stat-card"><div class="stat-val" style="color:{res_color}">{rc}</div><div class="stat-label">Resolved Since Yesterday</div></div>
+</div>"""
+
+    def _change_item(item, cls, icon):
+        lbl = f' <span class="hist-pool">{item["label"]}</span>' if item["label"] else ""
+        return f'<li class="{cls}">{icon} <span class="hist-mono">{item["key"]}</span>{lbl} — {item["bl"]}</li>'
+
+    changes_html = ""
+    if yest and (new_list or res_list):
+        new_rows = "".join(_change_item(r, "change-new",      "🔴") for r in new_list) or "<li class='change-empty'>None</li>"
+        res_rows = "".join(_change_item(r, "change-resolved", "✅") for r in res_list) or "<li class='change-empty'>None</li>"
+        changes_html = f"""
+<div class="history-section">
+  <h3 class="history-section-title">Changes Since Last Run</h3>
+  <div class="changes-grid">
+    <div class="changes-col">
+      <div class="changes-col-header changes-new-header">🔴 New Listings ({nc})</div>
+      <ul class="changes-list">{new_rows}</ul>
+    </div>
+    <div class="changes-col">
+      <div class="changes-col-header changes-res-header">✅ Resolved ({rc})</div>
+      <ul class="changes-list">{res_rows}</ul>
+    </div>
+  </div>
+</div>"""
+
+    # ── Listing frequency table ───────────────────────────────────────────────
+    freq_rows = sorted(
+        [(k, d) for k, d in all_res.items() if d["days_listed"] > 0],
+        key=lambda x: (-x[1]["days_listed"], x[0])
+    )
+    freq_html = ""
+    for key, d in freq_rows:
+        pct  = round(d["days_listed"] / n_days * 100)
+        bls  = d["last_listings"]
+        icon = "🔴" if bls else "✅"
+        cur  = "".join(f'<span class="hist-bl-tag">{bl}</span>' for bl in bls) or '<span class="hist-clean">Clean today</span>'
+        freq_html += (
+            f'<tr><td class="hist-resource">{icon} <span class="hist-mono">{key}</span></td>'
+            f'<td class="hist-pool-cell">{d["label"]}</td>'
+            f'<td class="hist-type-cell">{d["type"]}</td>'
+            f'<td class="hist-days">{d["days_listed"]}/{n_days} <span class="hist-pct">({pct}%)</span>'
+            f'  <div class="hist-bar"><div class="hist-bar-fill" style="width:{max(pct,2)}%"></div></div></td>'
+            f'<td>{cur}</td></tr>'
+        )
+    freq_table = f"""
+<div class="history-section">
+  <h3 class="history-section-title">Listing Frequency — All Time</h3>
+  <table class="hist-table">
+    <thead><tr><th>Resource</th><th>Pool</th><th>Type</th><th>Days Listed</th><th>Active Listings</th></tr></thead>
+    <tbody>{freq_html}</tbody>
+  </table>
+</div>""" if freq_html else ""
+
+    # ── DNSBL hit frequency ───────────────────────────────────────────────────
+    bl_rows = "".join(
+        f'<tr><td class="hist-bl-name">{bl}</td>'
+        f'<td class="hist-count">{d["count"]}</td>'
+        f'<td class="hist-count">{len(d["resources"])}</td></tr>'
+        for bl, d in sorted(dnsbl_freq.items(), key=lambda x: -x[1]["count"])
+    )
+    dnsbl_table = f"""
+<div class="history-section">
+  <h3 class="history-section-title">Blacklist Hit Frequency</h3>
+  <table class="hist-table" style="max-width:600px">
+    <thead><tr><th>Blacklist</th><th>Total Hits</th><th>Unique Resources</th></tr></thead>
+    <tbody>{bl_rows}</tbody>
+  </table>
+</div>""" if bl_rows else ""
+
+    # ── Score sparklines ──────────────────────────────────────────────────────
+    def _spark_card(key, d):
+        scores = d["scores"]
+        latest = scores[-1] if scores else 0
+        color  = score_color(latest)
+        spark  = sparkline_svg(scores, color=color)
+        mono   = ' style="font-family:monospace;font-size:0.7rem"' if d["type"] == "IP" else ""
+        return (f'<div class="hist-spark-card">'
+                f'<div class="hist-spark-name"{mono}>{key}</div>'
+                f'<div class="hist-spark-pool">{d["label"] or "—"}</div>'
+                f'<div class="hist-spark-chart">{spark}</div>'
+                f'<div class="hist-spark-score" style="color:{color}">{latest}</div>'
+                f'</div>')
+
+    dom_cards = "".join(_spark_card(k, d) for k, d in sorted(all_res.items()) if d["type"] == "Domain")
+    ip_cards  = "".join(_spark_card(k, d) for k, d in sorted(all_res.items()) if d["type"] == "IP")
+
+    trends_html = ""
+    if dom_cards:
+        trends_html += f'<div class="hist-spark-group-title">Domains</div><div class="hist-spark-grid">{dom_cards}</div>'
+    if ip_cards:
+        trends_html += f'<div class="hist-spark-group-title">IPs</div><div class="hist-spark-grid">{ip_cards}</div>'
+
+    trends_section = f"""
+<div class="history-section">
+  <h3 class="history-section-title">Score Trends ({n_days} day{"s" if n_days != 1 else ""})</h3>
+  {trends_html}
+</div>""" if trends_html else ""
+
+    date_range = f'Tracking {dates[0]} → {dates[-1]}'
+    return f"""
+<div class="pool-nav">
+  <span class="pool-nav-label">{date_range}</span>
+</div>
+<div class="content">
+  {overview}
+  {changes_html}
+  {freq_table}
+  {dnsbl_table}
+  {trends_section}
+</div>"""
+
+
 def score_color(score: int) -> str:
     if score >= 90: return "#22c55e"
     if score >= 70: return "#f59e0b"
@@ -724,7 +971,8 @@ def render_ip_card(result: dict, card_id: str) -> str:
 # HTML — full page
 # ──────────────────────────────────────────────────────────────────────────────
 
-def generate_html(domain_groups: list, ip_groups: list, generated_at: datetime.datetime) -> str:
+def generate_html(domain_groups: list, ip_groups: list, generated_at: datetime.datetime,
+                  snapshots: list = None) -> str:
     all_domains = [r for _, g in domain_groups for r in g]
     all_ips     = [r for _, g in ip_groups     for r in g]
     all_results = all_domains + all_ips
@@ -910,6 +1158,46 @@ def generate_html(domain_groups: list, ip_groups: list, generated_at: datetime.d
     .abip-usage {{ font-size: 0.72rem; color: #64748b; margin-top: 0.3rem; }}
     .abip-usage span {{ color: #94a3b8; }}
 
+    /* History tab */
+    .history-empty {{ color: #64748b; font-style: italic; padding: 2rem; }}
+    .history-section {{ margin-bottom: 2.5rem; }}
+    .history-section-title {{ font-size: 1rem; font-weight: 700; color: #f1f5f9; margin-bottom: 1rem; padding-bottom: 0.4rem; border-bottom: 1px solid #1e293b; }}
+    .changes-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }}
+    @media (max-width: 700px) {{ .changes-grid {{ grid-template-columns: 1fr; }} }}
+    .changes-col {{ background: #1e293b; border-radius: 10px; border: 1px solid #334155; overflow: hidden; }}
+    .changes-col-header {{ padding: 0.6rem 1rem; font-size: 0.8rem; font-weight: 600; border-bottom: 1px solid #334155; }}
+    .changes-new-header {{ background: #1a0505; color: #fca5a5; }}
+    .changes-res-header {{ background: #052e16; color: #86efac; }}
+    .changes-list {{ list-style: none; padding: 0.5rem 0; max-height: 260px; overflow-y: auto; }}
+    .changes-list li {{ padding: 0.3rem 1rem; font-size: 0.8rem; color: #cbd5e1; border-bottom: 1px solid #1e293b; }}
+    .changes-list li:last-child {{ border-bottom: none; }}
+    .change-empty {{ color: #475569 !important; font-style: italic; }}
+    .hist-mono {{ font-family: monospace; font-size: 0.8rem; }}
+    .hist-pool {{ color: #64748b; font-size: 0.75rem; }}
+    .hist-table {{ width: 100%; border-collapse: collapse; font-size: 0.82rem; }}
+    .hist-table th {{ text-align: left; color: #64748b; font-weight: 600; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.4rem 0.75rem; border-bottom: 1px solid #334155; background: #162032; }}
+    .hist-table td {{ padding: 0.4rem 0.75rem; border-bottom: 1px solid #1e293b; vertical-align: middle; }}
+    .hist-table tr:last-child td {{ border-bottom: none; }}
+    .hist-table tr:hover td {{ background: #162032; }}
+    .hist-resource {{ white-space: nowrap; }}
+    .hist-pool-cell {{ color: #64748b; font-size: 0.78rem; }}
+    .hist-type-cell {{ color: #94a3b8; font-size: 0.78rem; }}
+    .hist-days {{ font-size: 0.8rem; color: #cbd5e1; min-width: 160px; }}
+    .hist-pct {{ color: #64748b; font-size: 0.72rem; }}
+    .hist-bar {{ height: 5px; background: #1e293b; border-radius: 999px; margin-top: 0.25rem; overflow: hidden; max-width: 120px; }}
+    .hist-bar-fill {{ height: 100%; background: #3b82f6; border-radius: 999px; }}
+    .hist-bl-tag {{ display: inline-block; background: #1a0505; color: #fca5a5; border: 1px solid #7f1d1d; border-radius: 4px; font-size: 0.68rem; padding: 0.1rem 0.4rem; margin: 0.1rem 0.15rem; }}
+    .hist-clean {{ color: #22c55e; font-size: 0.78rem; }}
+    .hist-bl-name {{ color: #cbd5e1; font-weight: 500; }}
+    .hist-count {{ text-align: center; color: #94a3b8; }}
+    .hist-spark-group-title {{ font-size: 0.78rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.06em; margin: 1.25rem 0 0.6rem; }}
+    .hist-spark-grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 0.75rem; }}
+    .hist-spark-card {{ background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 0.75rem; display: flex; flex-direction: column; gap: 0.3rem; }}
+    .hist-spark-name {{ font-size: 0.72rem; color: #cbd5e1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }}
+    .hist-spark-pool {{ font-size: 0.65rem; color: #475569; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }}
+    .hist-spark-chart {{ line-height: 0; }}
+    .hist-spark-score {{ font-size: 0.9rem; font-weight: 700; }}
+
     .footer {{ text-align: center; padding: 2rem; color: #475569; font-size: 0.8rem; }}
   </style>
 </head>
@@ -934,6 +1222,9 @@ def generate_html(domain_groups: list, ip_groups: list, generated_at: datetime.d
   <button class="tab-btn" onclick="switchTab('ips', this)">
     IP Pools <span class="tab-count">{len(all_ips)}</span>
   </button>
+  <button class="tab-btn" onclick="switchTab('history', this)">
+    History <span class="tab-count">{len(snapshots) if snapshots else 0}</span>
+  </button>
 </div>
 
 <div id="tab-domains" class="tab-panel active">
@@ -954,6 +1245,10 @@ def generate_html(domain_groups: list, ip_groups: list, generated_at: datetime.d
   <div class="content">
     {ip_sections_html}
   </div>
+</div>
+
+<div id="tab-history" class="tab-panel">
+  {generate_history_html(snapshots or [])}
 </div>
 
 <script>
@@ -1029,6 +1324,7 @@ def publish_to_github(repo_dir: Path, latest_path: Path, now: datetime.datetime,
         return r.returncode, (r.stdout + r.stderr).strip()
 
     git(["add", "index.html"])
+    git(["add", "snapshots/"])
     code, out = git(["commit", "-m", f"dashboard update {now.strftime('%Y-%m-%d %H:%M UTC')}"])
     if "nothing to commit" in out:
         print("  GitHub Pages: no changes to publish")
@@ -1199,9 +1495,15 @@ def _run(config, ip_entries, domain_entries, slack_url, vt_key, dqs_key,
     domain_groups = group_by_label(final_domains)
     ip_groups     = group_by_label(final_ips)
 
+    # ── Snapshot — save today's data, load history ────────────────────────────
+    now          = datetime.datetime.now(datetime.timezone.utc)
+    snapshot_dir = script_dir / "snapshots"
+    save_snapshot(snapshot_dir, now, ip_data, domain_data, ip_entries, domain_entries)
+    snapshots = load_snapshots(snapshot_dir)
+    print(f"  Snapshots: {len(snapshots)} day(s) of history saved")
+
     # ── Generate report ────────────────────────────────────────────────────────
-    now         = datetime.datetime.now(datetime.timezone.utc)
-    html        = generate_html(domain_groups, ip_groups, now)
+    html        = generate_html(domain_groups, ip_groups, now, snapshots)
     latest_path = report_dir / "latest.html"
     dated_path  = report_dir / f"report_{now.strftime('%Y%m%d_%H%M%S')}.html"
     latest_path.write_text(html, encoding="utf-8")
