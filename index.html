@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>IP &amp; Domain Reputation Dashboard — 2026-08-28 01:45:46 UTC</title>
+  <title>IP &amp; Domain Reputation Dashboard — 2026-08-28 02:00:50 UTC</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; }
@@ -32,8 +32,15 @@
     /* Pool nav */
     .pool-nav { display: flex; gap: 0.5rem; padding: 0.75rem 2rem; flex-wrap: wrap; align-items: center; background: #0a1120; border-bottom: 1px solid #1e293b; }
     .pool-nav-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; margin-right: 0.25rem; white-space: nowrap; }
-    .nav-pool { display: flex; align-items: center; gap: 0.35rem; padding: 0.25rem 0.7rem; border-radius: 999px; font-size: 0.78rem; font-weight: 600; text-decoration: none; background: #0f172a; border: 1px solid #334155; color: #cbd5e1; }
+    .nav-pool { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.25rem 0.7rem; border-radius: 999px; font-size: 0.78rem; font-weight: 600; text-decoration: none; background: #0f172a; border: 1px solid #334155; color: #cbd5e1; cursor: pointer; transition: border-color 0.15s, color 0.15s, background 0.15s; font-family: inherit; }
     .nav-pool:hover { border-color: #60a5fa; color: #60a5fa; }
+    .nav-pool.active { background: #1e3a5f; border-color: #60a5fa; color: #93c5fd; }
+    .nav-pool-clear { border-color: #475569; color: #94a3b8; font-size: 0.72rem; }
+    .nav-pool-clear:hover { border-color: #ef4444; color: #ef4444; }
+    /* Back-to-top button */
+    #back-to-top { position: fixed; bottom: 2rem; right: 2rem; width: 2.75rem; height: 2.75rem; border-radius: 50%; background: #1e3a5f; border: 1px solid #3b82f6; color: #93c5fd; font-size: 1.2rem; cursor: pointer; display: none; align-items: center; justify-content: center; z-index: 999; box-shadow: 0 4px 12px rgba(0,0,0,0.4); transition: opacity 0.2s, transform 0.2s; }
+    #back-to-top.visible { display: flex; }
+    #back-to-top:hover { background: #2d4e7a; transform: translateY(-2px); }
     .nav-count { background: #334155; border-radius: 999px; font-size: 0.62rem; padding: 0.05rem 0.35rem; color: #94a3b8; }
 
     /* Tab panels */
@@ -277,7 +284,7 @@
 
 <div class="header">
   <h1>🛡 IP &amp; Domain Reputation Dashboard</h1>
-  <div class="subtitle">Generated 2026-08-28 01:45:46 UTC &nbsp;·&nbsp; Sources: DNSBL/SURBL/URIBL + Google Safe Browsing + ip-api.com</div>
+  <div class="subtitle">Generated 2026-08-28 02:00:50 UTC &nbsp;·&nbsp; Sources: DNSBL/SURBL/URIBL + Google Safe Browsing + ip-api.com</div>
 </div>
 
 
@@ -316,8 +323,9 @@
 
 <div id="tab-domains" class="tab-panel active">
   <div class="pool-nav">
-    <span class="pool-nav-label">Jump to:</span>
-    <a href="#domain-pool-0" class="nav-pool">ConvertKit Mail <span class="nav-count">12</span></a><a href="#domain-pool-1" class="nav-pool">Kit Mail <span class="nav-count">12</span></a>
+    <span class="pool-nav-label">POOLS:</span>
+    <button class="nav-pool" data-pool="ConvertKit Mail" onclick="togglePoolFilter(this, 'domain')">ConvertKit Mail <span class="nav-count">12</span></button><button class="nav-pool" data-pool="Kit Mail" onclick="togglePoolFilter(this, 'domain')">Kit Mail <span class="nav-count">12</span></button>
+    <button class="nav-pool nav-pool-clear" id="domain-pool-clear" onclick="clearPoolFilter('domain')" style="display:none">✕ Clear</button>
   </div>
   <div class="content">
     
@@ -351,7 +359,7 @@
     </div>
   </div>
   <div class="ip-meta">
-    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">1 listed &nbsp;·&nbsp; 4 clean &nbsp;·&nbsp; 6 total</span></div>
+    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">1 listed &nbsp;·&nbsp; 2 clean &nbsp;·&nbsp; 6 total</span></div>
     
     <div class="meta-item"><span class="meta-key">Google SB</span><span class="meta-val" style="color:#22c55e">Clean</span></div>
   </div>
@@ -372,7 +380,7 @@
     <summary>Show all 6 domain blacklist results</summary>
     <table class="dnsbl-table">
       <thead><tr><th></th><th>Blacklist</th><th>Category</th><th>Result</th></tr></thead>
-      <tbody><tr class="clean-row"><td>✅</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Black</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Grey</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Multi</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Red</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="listed-row"><td>🔴</td><td><strong>ivmURI</strong></td><td>ivmURI</td><td class="listed-text">Listed — <code class="response">127.0.0.11</code></td></tr></tbody>
+      <tbody><tr class="clean-row"><td>✅</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Black</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Grey</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Multi</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Red</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="listed-row"><td>🔴</td><td><strong>ivmURI</strong></td><td>ivmURI</td><td class="listed-text">Listed — <code class="response">127.0.0.11</code></td></tr></tbody>
     </table>
   </details>
 </div>
@@ -380,6 +388,44 @@
   <div class="ip-card-header">
     <div class="ip-title">
       <span class="ip-address domain-name">click.convertkit-mail.com</span>
+      <span class="badge badge-clean">Clean</span>
+      <span class="pool-badge">ConvertKit Mail</span>
+    </div>
+    <div class="score-ring" style="--score-color:#22c55e;">
+      <span class="score-number">100</span>
+      <span class="score-label">/ 100</span>
+    </div>
+  </div>
+  <div class="ip-meta">
+    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 2 clean &nbsp;·&nbsp; 6 total</span></div>
+    
+    <div class="meta-item"><span class="meta-key">Google SB</span><span class="meta-val" style="color:#22c55e">Clean</span></div>
+  </div>
+  
+  
+  
+  
+<div class="gsb-panel">
+  <div class="gsb-header">
+    <span class="gsb-logo">Google Safe Browsing</span>
+    <span class="gsb-meta">Phishing · Malware · Unwanted software</span>
+    <span class="gsb-status" style="color:#22c55e">Clean</span>
+  </div>
+  <div class="gsb-flags"><span class="gsb-flag gsb-flag-ok">No threats detected</span></div>
+  <div class="gsb-links"><a href="https://transparencyreport.google.com/safe-browsing/search?url=https%3A%2F%2Fclick.convertkit-mail.com%2F" target="_blank" rel="noopener">Transparency Report ↗</a></div>
+</div>
+  <details class="dnsbl-details">
+    <summary>Show all 6 domain blacklist results</summary>
+    <table class="dnsbl-table">
+      <thead><tr><th></th><th>Blacklist</th><th>Category</th><th>Result</th></tr></thead>
+      <tbody><tr class="clean-row"><td>✅</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Black</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Grey</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Multi</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Red</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
+    </table>
+  </details>
+</div>
+<div class="ip-card domain-card" id="domain-pool0-2" data-status="clean" data-resource="convertkit-mail2.com" data-label="ConvertKit Mail">
+  <div class="ip-card-header">
+    <div class="ip-title">
+      <span class="ip-address domain-name">convertkit-mail2.com</span>
       <span class="badge badge-clean">Clean</span>
       <span class="pool-badge">ConvertKit Mail</span>
     </div>
@@ -404,20 +450,172 @@
     <span class="gsb-status" style="color:#22c55e">Clean</span>
   </div>
   <div class="gsb-flags"><span class="gsb-flag gsb-flag-ok">No threats detected</span></div>
-  <div class="gsb-links"><a href="https://transparencyreport.google.com/safe-browsing/search?url=https%3A%2F%2Fclick.convertkit-mail.com%2F" target="_blank" rel="noopener">Transparency Report ↗</a></div>
+  <div class="gsb-links"><a href="https://transparencyreport.google.com/safe-browsing/search?url=https%3A%2F%2Fconvertkit-mail2.com%2F" target="_blank" rel="noopener">Transparency Report ↗</a></div>
 </div>
   <details class="dnsbl-details">
     <summary>Show all 6 domain blacklist results</summary>
     <table class="dnsbl-table">
       <thead><tr><th></th><th>Blacklist</th><th>Category</th><th>Result</th></tr></thead>
-      <tbody><tr class="clean-row"><td>✅</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Black</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Grey</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Multi</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Red</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
+      <tbody><tr class="clean-row"><td>✅</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Black</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Grey</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Multi</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Red</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
     </table>
   </details>
 </div>
-<div class="ip-card domain-card" id="domain-pool0-2" data-status="clean" data-resource="convertkit-mail2.com" data-label="ConvertKit Mail">
+<div class="ip-card domain-card" id="domain-pool0-3" data-status="clean" data-resource="click.convertkit-mail2.com" data-label="ConvertKit Mail">
   <div class="ip-card-header">
     <div class="ip-title">
-      <span class="ip-address domain-name">convertkit-mail2.com</span>
+      <span class="ip-address domain-name">click.convertkit-mail2.com</span>
+      <span class="badge badge-clean">Clean</span>
+      <span class="pool-badge">ConvertKit Mail</span>
+    </div>
+    <div class="score-ring" style="--score-color:#22c55e;">
+      <span class="score-number">100</span>
+      <span class="score-label">/ 100</span>
+    </div>
+  </div>
+  <div class="ip-meta">
+    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 6 clean &nbsp;·&nbsp; 6 total</span></div>
+    
+    <div class="meta-item"><span class="meta-key">Google SB</span><span class="meta-val" style="color:#22c55e">Clean</span></div>
+  </div>
+  
+  
+  
+  
+<div class="gsb-panel">
+  <div class="gsb-header">
+    <span class="gsb-logo">Google Safe Browsing</span>
+    <span class="gsb-meta">Phishing · Malware · Unwanted software</span>
+    <span class="gsb-status" style="color:#22c55e">Clean</span>
+  </div>
+  <div class="gsb-flags"><span class="gsb-flag gsb-flag-ok">No threats detected</span></div>
+  <div class="gsb-links"><a href="https://transparencyreport.google.com/safe-browsing/search?url=https%3A%2F%2Fclick.convertkit-mail2.com%2F" target="_blank" rel="noopener">Transparency Report ↗</a></div>
+</div>
+  <details class="dnsbl-details">
+    <summary>Show all 6 domain blacklist results</summary>
+    <table class="dnsbl-table">
+      <thead><tr><th></th><th>Blacklist</th><th>Category</th><th>Result</th></tr></thead>
+      <tbody><tr class="clean-row"><td>✅</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Black</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Grey</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Multi</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Red</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
+    </table>
+  </details>
+</div>
+<div class="ip-card domain-card" id="domain-pool0-4" data-status="clean" data-resource="convertkit-mail3.com" data-label="ConvertKit Mail">
+  <div class="ip-card-header">
+    <div class="ip-title">
+      <span class="ip-address domain-name">convertkit-mail3.com</span>
+      <span class="badge badge-clean">Clean</span>
+      <span class="pool-badge">ConvertKit Mail</span>
+    </div>
+    <div class="score-ring" style="--score-color:#22c55e;">
+      <span class="score-number">100</span>
+      <span class="score-label">/ 100</span>
+    </div>
+  </div>
+  <div class="ip-meta">
+    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 4 clean &nbsp;·&nbsp; 6 total</span></div>
+    
+    <div class="meta-item"><span class="meta-key">Google SB</span><span class="meta-val" style="color:#22c55e">Clean</span></div>
+  </div>
+  
+  
+  
+  
+<div class="gsb-panel">
+  <div class="gsb-header">
+    <span class="gsb-logo">Google Safe Browsing</span>
+    <span class="gsb-meta">Phishing · Malware · Unwanted software</span>
+    <span class="gsb-status" style="color:#22c55e">Clean</span>
+  </div>
+  <div class="gsb-flags"><span class="gsb-flag gsb-flag-ok">No threats detected</span></div>
+  <div class="gsb-links"><a href="https://transparencyreport.google.com/safe-browsing/search?url=https%3A%2F%2Fconvertkit-mail3.com%2F" target="_blank" rel="noopener">Transparency Report ↗</a></div>
+</div>
+  <details class="dnsbl-details">
+    <summary>Show all 6 domain blacklist results</summary>
+    <table class="dnsbl-table">
+      <thead><tr><th></th><th>Blacklist</th><th>Category</th><th>Result</th></tr></thead>
+      <tbody><tr class="clean-row"><td>✅</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Black</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Grey</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Multi</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Red</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
+    </table>
+  </details>
+</div>
+<div class="ip-card domain-card" id="domain-pool0-5" data-status="clean" data-resource="click.convertkit-mail3.com" data-label="ConvertKit Mail">
+  <div class="ip-card-header">
+    <div class="ip-title">
+      <span class="ip-address domain-name">click.convertkit-mail3.com</span>
+      <span class="badge badge-clean">Clean</span>
+      <span class="pool-badge">ConvertKit Mail</span>
+    </div>
+    <div class="score-ring" style="--score-color:#22c55e;">
+      <span class="score-number">100</span>
+      <span class="score-label">/ 100</span>
+    </div>
+  </div>
+  <div class="ip-meta">
+    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 2 clean &nbsp;·&nbsp; 6 total</span></div>
+    
+    <div class="meta-item"><span class="meta-key">Google SB</span><span class="meta-val" style="color:#22c55e">Clean</span></div>
+  </div>
+  
+  
+  
+  
+<div class="gsb-panel">
+  <div class="gsb-header">
+    <span class="gsb-logo">Google Safe Browsing</span>
+    <span class="gsb-meta">Phishing · Malware · Unwanted software</span>
+    <span class="gsb-status" style="color:#22c55e">Clean</span>
+  </div>
+  <div class="gsb-flags"><span class="gsb-flag gsb-flag-ok">No threats detected</span></div>
+  <div class="gsb-links"><a href="https://transparencyreport.google.com/safe-browsing/search?url=https%3A%2F%2Fclick.convertkit-mail3.com%2F" target="_blank" rel="noopener">Transparency Report ↗</a></div>
+</div>
+  <details class="dnsbl-details">
+    <summary>Show all 6 domain blacklist results</summary>
+    <table class="dnsbl-table">
+      <thead><tr><th></th><th>Blacklist</th><th>Category</th><th>Result</th></tr></thead>
+      <tbody><tr class="clean-row"><td>✅</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Black</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Grey</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Multi</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Red</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
+    </table>
+  </details>
+</div>
+<div class="ip-card domain-card" id="domain-pool0-6" data-status="clean" data-resource="convertkit-mail4.com" data-label="ConvertKit Mail">
+  <div class="ip-card-header">
+    <div class="ip-title">
+      <span class="ip-address domain-name">convertkit-mail4.com</span>
+      <span class="badge badge-clean">Clean</span>
+      <span class="pool-badge">ConvertKit Mail</span>
+    </div>
+    <div class="score-ring" style="--score-color:#22c55e;">
+      <span class="score-number">100</span>
+      <span class="score-label">/ 100</span>
+    </div>
+  </div>
+  <div class="ip-meta">
+    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 2 clean &nbsp;·&nbsp; 6 total</span></div>
+    
+    <div class="meta-item"><span class="meta-key">Google SB</span><span class="meta-val" style="color:#22c55e">Clean</span></div>
+  </div>
+  
+  
+  
+  
+<div class="gsb-panel">
+  <div class="gsb-header">
+    <span class="gsb-logo">Google Safe Browsing</span>
+    <span class="gsb-meta">Phishing · Malware · Unwanted software</span>
+    <span class="gsb-status" style="color:#22c55e">Clean</span>
+  </div>
+  <div class="gsb-flags"><span class="gsb-flag gsb-flag-ok">No threats detected</span></div>
+  <div class="gsb-links"><a href="https://transparencyreport.google.com/safe-browsing/search?url=https%3A%2F%2Fconvertkit-mail4.com%2F" target="_blank" rel="noopener">Transparency Report ↗</a></div>
+</div>
+  <details class="dnsbl-details">
+    <summary>Show all 6 domain blacklist results</summary>
+    <table class="dnsbl-table">
+      <thead><tr><th></th><th>Blacklist</th><th>Category</th><th>Result</th></tr></thead>
+      <tbody><tr class="clean-row"><td>✅</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Black</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Grey</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Multi</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Red</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
+    </table>
+  </details>
+</div>
+<div class="ip-card domain-card" id="domain-pool0-7" data-status="clean" data-resource="click.convertkit-mail4.com" data-label="ConvertKit Mail">
+  <div class="ip-card-header">
+    <div class="ip-title">
+      <span class="ip-address domain-name">click.convertkit-mail4.com</span>
       <span class="badge badge-clean">Clean</span>
       <span class="pool-badge">ConvertKit Mail</span>
     </div>
@@ -442,203 +640,13 @@
     <span class="gsb-status" style="color:#22c55e">Clean</span>
   </div>
   <div class="gsb-flags"><span class="gsb-flag gsb-flag-ok">No threats detected</span></div>
-  <div class="gsb-links"><a href="https://transparencyreport.google.com/safe-browsing/search?url=https%3A%2F%2Fconvertkit-mail2.com%2F" target="_blank" rel="noopener">Transparency Report ↗</a></div>
-</div>
-  <details class="dnsbl-details">
-    <summary>Show all 6 domain blacklist results</summary>
-    <table class="dnsbl-table">
-      <thead><tr><th></th><th>Blacklist</th><th>Category</th><th>Result</th></tr></thead>
-      <tbody><tr class="clean-row"><td>✅</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Black</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Grey</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Multi</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Red</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
-    </table>
-  </details>
-</div>
-<div class="ip-card domain-card" id="domain-pool0-3" data-status="clean" data-resource="click.convertkit-mail2.com" data-label="ConvertKit Mail">
-  <div class="ip-card-header">
-    <div class="ip-title">
-      <span class="ip-address domain-name">click.convertkit-mail2.com</span>
-      <span class="badge badge-clean">Clean</span>
-      <span class="pool-badge">ConvertKit Mail</span>
-    </div>
-    <div class="score-ring" style="--score-color:#22c55e;">
-      <span class="score-number">100</span>
-      <span class="score-label">/ 100</span>
-    </div>
-  </div>
-  <div class="ip-meta">
-    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 4 clean &nbsp;·&nbsp; 6 total</span></div>
-    
-    <div class="meta-item"><span class="meta-key">Google SB</span><span class="meta-val" style="color:#22c55e">Clean</span></div>
-  </div>
-  
-  
-  
-  
-<div class="gsb-panel">
-  <div class="gsb-header">
-    <span class="gsb-logo">Google Safe Browsing</span>
-    <span class="gsb-meta">Phishing · Malware · Unwanted software</span>
-    <span class="gsb-status" style="color:#22c55e">Clean</span>
-  </div>
-  <div class="gsb-flags"><span class="gsb-flag gsb-flag-ok">No threats detected</span></div>
-  <div class="gsb-links"><a href="https://transparencyreport.google.com/safe-browsing/search?url=https%3A%2F%2Fclick.convertkit-mail2.com%2F" target="_blank" rel="noopener">Transparency Report ↗</a></div>
-</div>
-  <details class="dnsbl-details">
-    <summary>Show all 6 domain blacklist results</summary>
-    <table class="dnsbl-table">
-      <thead><tr><th></th><th>Blacklist</th><th>Category</th><th>Result</th></tr></thead>
-      <tbody><tr class="clean-row"><td>✅</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Black</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Grey</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Multi</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Red</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
-    </table>
-  </details>
-</div>
-<div class="ip-card domain-card" id="domain-pool0-4" data-status="clean" data-resource="convertkit-mail3.com" data-label="ConvertKit Mail">
-  <div class="ip-card-header">
-    <div class="ip-title">
-      <span class="ip-address domain-name">convertkit-mail3.com</span>
-      <span class="badge badge-clean">Clean</span>
-      <span class="pool-badge">ConvertKit Mail</span>
-    </div>
-    <div class="score-ring" style="--score-color:#22c55e;">
-      <span class="score-number">100</span>
-      <span class="score-label">/ 100</span>
-    </div>
-  </div>
-  <div class="ip-meta">
-    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 5 clean &nbsp;·&nbsp; 6 total</span></div>
-    
-    <div class="meta-item"><span class="meta-key">Google SB</span><span class="meta-val" style="color:#22c55e">Clean</span></div>
-  </div>
-  
-  
-  
-  
-<div class="gsb-panel">
-  <div class="gsb-header">
-    <span class="gsb-logo">Google Safe Browsing</span>
-    <span class="gsb-meta">Phishing · Malware · Unwanted software</span>
-    <span class="gsb-status" style="color:#22c55e">Clean</span>
-  </div>
-  <div class="gsb-flags"><span class="gsb-flag gsb-flag-ok">No threats detected</span></div>
-  <div class="gsb-links"><a href="https://transparencyreport.google.com/safe-browsing/search?url=https%3A%2F%2Fconvertkit-mail3.com%2F" target="_blank" rel="noopener">Transparency Report ↗</a></div>
-</div>
-  <details class="dnsbl-details">
-    <summary>Show all 6 domain blacklist results</summary>
-    <table class="dnsbl-table">
-      <thead><tr><th></th><th>Blacklist</th><th>Category</th><th>Result</th></tr></thead>
-      <tbody><tr class="clean-row"><td>✅</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Black</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Grey</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Multi</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Red</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
-    </table>
-  </details>
-</div>
-<div class="ip-card domain-card" id="domain-pool0-5" data-status="clean" data-resource="click.convertkit-mail3.com" data-label="ConvertKit Mail">
-  <div class="ip-card-header">
-    <div class="ip-title">
-      <span class="ip-address domain-name">click.convertkit-mail3.com</span>
-      <span class="badge badge-clean">Clean</span>
-      <span class="pool-badge">ConvertKit Mail</span>
-    </div>
-    <div class="score-ring" style="--score-color:#22c55e;">
-      <span class="score-number">100</span>
-      <span class="score-label">/ 100</span>
-    </div>
-  </div>
-  <div class="ip-meta">
-    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 4 clean &nbsp;·&nbsp; 6 total</span></div>
-    
-    <div class="meta-item"><span class="meta-key">Google SB</span><span class="meta-val" style="color:#22c55e">Clean</span></div>
-  </div>
-  
-  
-  
-  
-<div class="gsb-panel">
-  <div class="gsb-header">
-    <span class="gsb-logo">Google Safe Browsing</span>
-    <span class="gsb-meta">Phishing · Malware · Unwanted software</span>
-    <span class="gsb-status" style="color:#22c55e">Clean</span>
-  </div>
-  <div class="gsb-flags"><span class="gsb-flag gsb-flag-ok">No threats detected</span></div>
-  <div class="gsb-links"><a href="https://transparencyreport.google.com/safe-browsing/search?url=https%3A%2F%2Fclick.convertkit-mail3.com%2F" target="_blank" rel="noopener">Transparency Report ↗</a></div>
-</div>
-  <details class="dnsbl-details">
-    <summary>Show all 6 domain blacklist results</summary>
-    <table class="dnsbl-table">
-      <thead><tr><th></th><th>Blacklist</th><th>Category</th><th>Result</th></tr></thead>
-      <tbody><tr class="clean-row"><td>✅</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Black</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Grey</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Multi</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Red</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
-    </table>
-  </details>
-</div>
-<div class="ip-card domain-card" id="domain-pool0-6" data-status="clean" data-resource="convertkit-mail4.com" data-label="ConvertKit Mail">
-  <div class="ip-card-header">
-    <div class="ip-title">
-      <span class="ip-address domain-name">convertkit-mail4.com</span>
-      <span class="badge badge-clean">Clean</span>
-      <span class="pool-badge">ConvertKit Mail</span>
-    </div>
-    <div class="score-ring" style="--score-color:#22c55e;">
-      <span class="score-number">100</span>
-      <span class="score-label">/ 100</span>
-    </div>
-  </div>
-  <div class="ip-meta">
-    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 5 clean &nbsp;·&nbsp; 6 total</span></div>
-    
-    <div class="meta-item"><span class="meta-key">Google SB</span><span class="meta-val" style="color:#22c55e">Clean</span></div>
-  </div>
-  
-  
-  
-  
-<div class="gsb-panel">
-  <div class="gsb-header">
-    <span class="gsb-logo">Google Safe Browsing</span>
-    <span class="gsb-meta">Phishing · Malware · Unwanted software</span>
-    <span class="gsb-status" style="color:#22c55e">Clean</span>
-  </div>
-  <div class="gsb-flags"><span class="gsb-flag gsb-flag-ok">No threats detected</span></div>
-  <div class="gsb-links"><a href="https://transparencyreport.google.com/safe-browsing/search?url=https%3A%2F%2Fconvertkit-mail4.com%2F" target="_blank" rel="noopener">Transparency Report ↗</a></div>
-</div>
-  <details class="dnsbl-details">
-    <summary>Show all 6 domain blacklist results</summary>
-    <table class="dnsbl-table">
-      <thead><tr><th></th><th>Blacklist</th><th>Category</th><th>Result</th></tr></thead>
-      <tbody><tr class="clean-row"><td>✅</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Black</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Grey</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Multi</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Red</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
-    </table>
-  </details>
-</div>
-<div class="ip-card domain-card" id="domain-pool0-7" data-status="clean" data-resource="click.convertkit-mail4.com" data-label="ConvertKit Mail">
-  <div class="ip-card-header">
-    <div class="ip-title">
-      <span class="ip-address domain-name">click.convertkit-mail4.com</span>
-      <span class="badge badge-clean">Clean</span>
-      <span class="pool-badge">ConvertKit Mail</span>
-    </div>
-    <div class="score-ring" style="--score-color:#22c55e;">
-      <span class="score-number">100</span>
-      <span class="score-label">/ 100</span>
-    </div>
-  </div>
-  <div class="ip-meta">
-    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 5 clean &nbsp;·&nbsp; 6 total</span></div>
-    
-    <div class="meta-item"><span class="meta-key">Google SB</span><span class="meta-val" style="color:#22c55e">Clean</span></div>
-  </div>
-  
-  
-  
-  
-<div class="gsb-panel">
-  <div class="gsb-header">
-    <span class="gsb-logo">Google Safe Browsing</span>
-    <span class="gsb-meta">Phishing · Malware · Unwanted software</span>
-    <span class="gsb-status" style="color:#22c55e">Clean</span>
-  </div>
-  <div class="gsb-flags"><span class="gsb-flag gsb-flag-ok">No threats detected</span></div>
   <div class="gsb-links"><a href="https://transparencyreport.google.com/safe-browsing/search?url=https%3A%2F%2Fclick.convertkit-mail4.com%2F" target="_blank" rel="noopener">Transparency Report ↗</a></div>
 </div>
   <details class="dnsbl-details">
     <summary>Show all 6 domain blacklist results</summary>
     <table class="dnsbl-table">
       <thead><tr><th></th><th>Blacklist</th><th>Category</th><th>Result</th></tr></thead>
-      <tbody><tr class="clean-row"><td>✅</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Black</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Grey</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Multi</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Red</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
+      <tbody><tr class="clean-row"><td>✅</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Black</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Grey</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Multi</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Red</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
     </table>
   </details>
 </div>
@@ -655,7 +663,7 @@
     </div>
   </div>
   <div class="ip-meta">
-    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 5 clean &nbsp;·&nbsp; 6 total</span></div>
+    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 2 clean &nbsp;·&nbsp; 6 total</span></div>
     
     <div class="meta-item"><span class="meta-key">Google SB</span><span class="meta-val" style="color:#22c55e">Clean</span></div>
   </div>
@@ -676,7 +684,7 @@
     <summary>Show all 6 domain blacklist results</summary>
     <table class="dnsbl-table">
       <thead><tr><th></th><th>Blacklist</th><th>Category</th><th>Result</th></tr></thead>
-      <tbody><tr class="clean-row"><td>✅</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Black</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Grey</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Multi</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Red</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
+      <tbody><tr class="clean-row"><td>✅</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Black</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Grey</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Multi</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Red</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
     </table>
   </details>
 </div>
@@ -693,7 +701,7 @@
     </div>
   </div>
   <div class="ip-meta">
-    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 5 clean &nbsp;·&nbsp; 6 total</span></div>
+    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 3 clean &nbsp;·&nbsp; 6 total</span></div>
     
     <div class="meta-item"><span class="meta-key">Google SB</span><span class="meta-val" style="color:#22c55e">Clean</span></div>
   </div>
@@ -714,7 +722,7 @@
     <summary>Show all 6 domain blacklist results</summary>
     <table class="dnsbl-table">
       <thead><tr><th></th><th>Blacklist</th><th>Category</th><th>Result</th></tr></thead>
-      <tbody><tr class="clean-row"><td>✅</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Black</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Grey</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Multi</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Red</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
+      <tbody><tr class="clean-row"><td>✅</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Black</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Grey</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Multi</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Red</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
     </table>
   </details>
 </div>
@@ -731,7 +739,7 @@
     </div>
   </div>
   <div class="ip-meta">
-    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 5 clean &nbsp;·&nbsp; 6 total</span></div>
+    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 2 clean &nbsp;·&nbsp; 6 total</span></div>
     
     <div class="meta-item"><span class="meta-key">Google SB</span><span class="meta-val" style="color:#22c55e">Clean</span></div>
   </div>
@@ -752,7 +760,7 @@
     <summary>Show all 6 domain blacklist results</summary>
     <table class="dnsbl-table">
       <thead><tr><th></th><th>Blacklist</th><th>Category</th><th>Result</th></tr></thead>
-      <tbody><tr class="clean-row"><td>✅</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Black</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Grey</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Multi</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Red</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
+      <tbody><tr class="clean-row"><td>✅</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Black</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Grey</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Multi</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Red</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
     </table>
   </details>
 </div>
@@ -769,7 +777,7 @@
     </div>
   </div>
   <div class="ip-meta">
-    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 6 clean &nbsp;·&nbsp; 6 total</span></div>
+    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 2 clean &nbsp;·&nbsp; 6 total</span></div>
     
     <div class="meta-item"><span class="meta-key">Google SB</span><span class="meta-val" style="color:#ef4444">1 threat(s)</span></div>
   </div>
@@ -790,7 +798,7 @@
     <summary>Show all 6 domain blacklist results</summary>
     <table class="dnsbl-table">
       <thead><tr><th></th><th>Blacklist</th><th>Category</th><th>Result</th></tr></thead>
-      <tbody><tr class="clean-row"><td>✅</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Black</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Grey</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Multi</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Red</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
+      <tbody><tr class="clean-row"><td>✅</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Black</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Grey</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Multi</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Red</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
     </table>
   </details>
 </div></div>
@@ -825,7 +833,7 @@
     </div>
   </div>
   <div class="ip-meta">
-    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 5 clean &nbsp;·&nbsp; 6 total</span></div>
+    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 4 clean &nbsp;·&nbsp; 6 total</span></div>
     
     <div class="meta-item"><span class="meta-key">Google SB</span><span class="meta-val" style="color:#22c55e">Clean</span></div>
   </div>
@@ -846,7 +854,7 @@
     <summary>Show all 6 domain blacklist results</summary>
     <table class="dnsbl-table">
       <thead><tr><th></th><th>Blacklist</th><th>Category</th><th>Result</th></tr></thead>
-      <tbody><tr class="clean-row"><td>✅</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Black</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Grey</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Multi</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Red</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
+      <tbody><tr class="clean-row"><td>✅</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Black</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Grey</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Multi</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Red</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
     </table>
   </details>
 </div>
@@ -863,7 +871,7 @@
     </div>
   </div>
   <div class="ip-meta">
-    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 5 clean &nbsp;·&nbsp; 6 total</span></div>
+    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 3 clean &nbsp;·&nbsp; 6 total</span></div>
     
     <div class="meta-item"><span class="meta-key">Google SB</span><span class="meta-val" style="color:#22c55e">Clean</span></div>
   </div>
@@ -884,7 +892,7 @@
     <summary>Show all 6 domain blacklist results</summary>
     <table class="dnsbl-table">
       <thead><tr><th></th><th>Blacklist</th><th>Category</th><th>Result</th></tr></thead>
-      <tbody><tr class="clean-row"><td>✅</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Black</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Grey</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Multi</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Red</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
+      <tbody><tr class="clean-row"><td>✅</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Black</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Grey</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Multi</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Red</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
     </table>
   </details>
 </div>
@@ -901,7 +909,7 @@
     </div>
   </div>
   <div class="ip-meta">
-    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 4 clean &nbsp;·&nbsp; 6 total</span></div>
+    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 5 clean &nbsp;·&nbsp; 6 total</span></div>
     
     <div class="meta-item"><span class="meta-key">Google SB</span><span class="meta-val" style="color:#22c55e">Clean</span></div>
   </div>
@@ -922,7 +930,7 @@
     <summary>Show all 6 domain blacklist results</summary>
     <table class="dnsbl-table">
       <thead><tr><th></th><th>Blacklist</th><th>Category</th><th>Result</th></tr></thead>
-      <tbody><tr class="clean-row"><td>✅</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Black</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Grey</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Multi</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Red</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
+      <tbody><tr class="clean-row"><td>✅</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Black</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Grey</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Multi</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Red</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
     </table>
   </details>
 </div>
@@ -930,44 +938,6 @@
   <div class="ip-card-header">
     <div class="ip-title">
       <span class="ip-address domain-name">click.kit-mail2.com</span>
-      <span class="badge badge-clean">Clean</span>
-      <span class="pool-badge">Kit Mail</span>
-    </div>
-    <div class="score-ring" style="--score-color:#22c55e;">
-      <span class="score-number">100</span>
-      <span class="score-label">/ 100</span>
-    </div>
-  </div>
-  <div class="ip-meta">
-    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 6 clean &nbsp;·&nbsp; 6 total</span></div>
-    
-    <div class="meta-item"><span class="meta-key">Google SB</span><span class="meta-val" style="color:#22c55e">Clean</span></div>
-  </div>
-  
-  
-  
-  
-<div class="gsb-panel">
-  <div class="gsb-header">
-    <span class="gsb-logo">Google Safe Browsing</span>
-    <span class="gsb-meta">Phishing · Malware · Unwanted software</span>
-    <span class="gsb-status" style="color:#22c55e">Clean</span>
-  </div>
-  <div class="gsb-flags"><span class="gsb-flag gsb-flag-ok">No threats detected</span></div>
-  <div class="gsb-links"><a href="https://transparencyreport.google.com/safe-browsing/search?url=https%3A%2F%2Fclick.kit-mail2.com%2F" target="_blank" rel="noopener">Transparency Report ↗</a></div>
-</div>
-  <details class="dnsbl-details">
-    <summary>Show all 6 domain blacklist results</summary>
-    <table class="dnsbl-table">
-      <thead><tr><th></th><th>Blacklist</th><th>Category</th><th>Result</th></tr></thead>
-      <tbody><tr class="clean-row"><td>✅</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Black</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Grey</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Multi</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Red</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
-    </table>
-  </details>
-</div>
-<div class="ip-card domain-card" id="domain-pool1-4" data-status="clean" data-resource="kit-mail3.com" data-label="Kit Mail">
-  <div class="ip-card-header">
-    <div class="ip-title">
-      <span class="ip-address domain-name">kit-mail3.com</span>
       <span class="badge badge-clean">Clean</span>
       <span class="pool-badge">Kit Mail</span>
     </div>
@@ -992,13 +962,51 @@
     <span class="gsb-status" style="color:#22c55e">Clean</span>
   </div>
   <div class="gsb-flags"><span class="gsb-flag gsb-flag-ok">No threats detected</span></div>
+  <div class="gsb-links"><a href="https://transparencyreport.google.com/safe-browsing/search?url=https%3A%2F%2Fclick.kit-mail2.com%2F" target="_blank" rel="noopener">Transparency Report ↗</a></div>
+</div>
+  <details class="dnsbl-details">
+    <summary>Show all 6 domain blacklist results</summary>
+    <table class="dnsbl-table">
+      <thead><tr><th></th><th>Blacklist</th><th>Category</th><th>Result</th></tr></thead>
+      <tbody><tr class="clean-row"><td>✅</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Black</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Grey</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Multi</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Red</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
+    </table>
+  </details>
+</div>
+<div class="ip-card domain-card" id="domain-pool1-4" data-status="clean" data-resource="kit-mail3.com" data-label="Kit Mail">
+  <div class="ip-card-header">
+    <div class="ip-title">
+      <span class="ip-address domain-name">kit-mail3.com</span>
+      <span class="badge badge-clean">Clean</span>
+      <span class="pool-badge">Kit Mail</span>
+    </div>
+    <div class="score-ring" style="--score-color:#22c55e;">
+      <span class="score-number">100</span>
+      <span class="score-label">/ 100</span>
+    </div>
+  </div>
+  <div class="ip-meta">
+    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 2 clean &nbsp;·&nbsp; 6 total</span></div>
+    
+    <div class="meta-item"><span class="meta-key">Google SB</span><span class="meta-val" style="color:#22c55e">Clean</span></div>
+  </div>
+  
+  
+  
+  
+<div class="gsb-panel">
+  <div class="gsb-header">
+    <span class="gsb-logo">Google Safe Browsing</span>
+    <span class="gsb-meta">Phishing · Malware · Unwanted software</span>
+    <span class="gsb-status" style="color:#22c55e">Clean</span>
+  </div>
+  <div class="gsb-flags"><span class="gsb-flag gsb-flag-ok">No threats detected</span></div>
   <div class="gsb-links"><a href="https://transparencyreport.google.com/safe-browsing/search?url=https%3A%2F%2Fkit-mail3.com%2F" target="_blank" rel="noopener">Transparency Report ↗</a></div>
 </div>
   <details class="dnsbl-details">
     <summary>Show all 6 domain blacklist results</summary>
     <table class="dnsbl-table">
       <thead><tr><th></th><th>Blacklist</th><th>Category</th><th>Result</th></tr></thead>
-      <tbody><tr class="clean-row"><td>✅</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Black</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Grey</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Multi</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Red</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
+      <tbody><tr class="clean-row"><td>✅</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Black</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Grey</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Multi</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Red</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
     </table>
   </details>
 </div>
@@ -1015,7 +1023,7 @@
     </div>
   </div>
   <div class="ip-meta">
-    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 5 clean &nbsp;·&nbsp; 6 total</span></div>
+    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 3 clean &nbsp;·&nbsp; 6 total</span></div>
     
     <div class="meta-item"><span class="meta-key">Google SB</span><span class="meta-val" style="color:#22c55e">Clean</span></div>
   </div>
@@ -1036,7 +1044,7 @@
     <summary>Show all 6 domain blacklist results</summary>
     <table class="dnsbl-table">
       <thead><tr><th></th><th>Blacklist</th><th>Category</th><th>Result</th></tr></thead>
-      <tbody><tr class="clean-row"><td>✅</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Black</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Grey</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Multi</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Red</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
+      <tbody><tr class="clean-row"><td>✅</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Black</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Grey</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Multi</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Red</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
     </table>
   </details>
 </div>
@@ -1053,7 +1061,7 @@
     </div>
   </div>
   <div class="ip-meta">
-    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 5 clean &nbsp;·&nbsp; 6 total</span></div>
+    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 2 clean &nbsp;·&nbsp; 6 total</span></div>
     
     <div class="meta-item"><span class="meta-key">Google SB</span><span class="meta-val" style="color:#22c55e">Clean</span></div>
   </div>
@@ -1074,7 +1082,7 @@
     <summary>Show all 6 domain blacklist results</summary>
     <table class="dnsbl-table">
       <thead><tr><th></th><th>Blacklist</th><th>Category</th><th>Result</th></tr></thead>
-      <tbody><tr class="clean-row"><td>✅</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Black</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Grey</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Multi</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Red</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
+      <tbody><tr class="clean-row"><td>✅</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Black</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Grey</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Multi</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Red</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
     </table>
   </details>
 </div>
@@ -1091,7 +1099,7 @@
     </div>
   </div>
   <div class="ip-meta">
-    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 5 clean &nbsp;·&nbsp; 6 total</span></div>
+    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 3 clean &nbsp;·&nbsp; 6 total</span></div>
     
     <div class="meta-item"><span class="meta-key">Google SB</span><span class="meta-val" style="color:#22c55e">Clean</span></div>
   </div>
@@ -1112,7 +1120,7 @@
     <summary>Show all 6 domain blacklist results</summary>
     <table class="dnsbl-table">
       <thead><tr><th></th><th>Blacklist</th><th>Category</th><th>Result</th></tr></thead>
-      <tbody><tr class="clean-row"><td>✅</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Black</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Grey</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Multi</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Red</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
+      <tbody><tr class="clean-row"><td>✅</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Black</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Grey</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Multi</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Red</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
     </table>
   </details>
 </div>
@@ -1129,7 +1137,7 @@
     </div>
   </div>
   <div class="ip-meta">
-    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 6 clean &nbsp;·&nbsp; 6 total</span></div>
+    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 4 clean &nbsp;·&nbsp; 6 total</span></div>
     
     <div class="meta-item"><span class="meta-key">Google SB</span><span class="meta-val" style="color:#22c55e">Clean</span></div>
   </div>
@@ -1150,7 +1158,7 @@
     <summary>Show all 6 domain blacklist results</summary>
     <table class="dnsbl-table">
       <thead><tr><th></th><th>Blacklist</th><th>Category</th><th>Result</th></tr></thead>
-      <tbody><tr class="clean-row"><td>✅</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Black</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Grey</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Multi</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Red</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
+      <tbody><tr class="clean-row"><td>✅</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Black</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Grey</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Multi</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Red</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
     </table>
   </details>
 </div>
@@ -1167,7 +1175,7 @@
     </div>
   </div>
   <div class="ip-meta">
-    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 5 clean &nbsp;·&nbsp; 6 total</span></div>
+    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 2 clean &nbsp;·&nbsp; 6 total</span></div>
     
     <div class="meta-item"><span class="meta-key">Google SB</span><span class="meta-val" style="color:#22c55e">Clean</span></div>
   </div>
@@ -1188,7 +1196,7 @@
     <summary>Show all 6 domain blacklist results</summary>
     <table class="dnsbl-table">
       <thead><tr><th></th><th>Blacklist</th><th>Category</th><th>Result</th></tr></thead>
-      <tbody><tr class="clean-row"><td>✅</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Black</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Grey</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Multi</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Red</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
+      <tbody><tr class="clean-row"><td>✅</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Black</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Grey</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Multi</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Red</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
     </table>
   </details>
 </div>
@@ -1205,7 +1213,7 @@
     </div>
   </div>
   <div class="ip-meta">
-    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 5 clean &nbsp;·&nbsp; 6 total</span></div>
+    <div class="meta-item"><span class="meta-key">Domain DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 2 clean &nbsp;·&nbsp; 6 total</span></div>
     
     <div class="meta-item"><span class="meta-key">Google SB</span><span class="meta-val" style="color:#22c55e">Clean</span></div>
   </div>
@@ -1226,7 +1234,7 @@
     <summary>Show all 6 domain blacklist results</summary>
     <table class="dnsbl-table">
       <thead><tr><th></th><th>Blacklist</th><th>Category</th><th>Result</th></tr></thead>
-      <tbody><tr class="clean-row"><td>✅</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Black</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Grey</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Multi</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>URIBL Red</td><td>URIBL</td><td class="clean-text">Not listed</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
+      <tbody><tr class="clean-row"><td>✅</td><td>Spamhaus DBL</td><td>Spamhaus</td><td class="clean-text">Not listed</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Black</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Grey</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Multi</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="error-row"><td>⚠️</td><td>URIBL Red</td><td>URIBL</td><td class="error-text">Error: blocked/open-resolver (127.0.0.1)</td></tr><tr class="clean-row"><td>✅</td><td>ivmURI</td><td>ivmURI</td><td class="clean-text">Not listed</td></tr></tbody>
     </table>
   </details>
 </div>
@@ -1274,8 +1282,9 @@
 
 <div id="tab-ips" class="tab-panel">
   <div class="pool-nav">
-    <span class="pool-nav-label">Jump to:</span>
-    <a href="#ip-pool-0" class="nav-pool">Tim Ferriss <span class="nav-count">1</span></a><a href="#ip-pool-1" class="nav-pool">Test <span class="nav-count">1</span></a><a href="#ip-pool-2" class="nav-pool">No2 <span class="nav-count">10</span></a><a href="#ip-pool-3" class="nav-pool">No <span class="nav-count">6</span></a><a href="#ip-pool-4" class="nav-pool">Medium <span class="nav-count">11</span></a><a href="#ip-pool-5" class="nav-pool">Low <span class="nav-count">5</span></a><a href="#ip-pool-6" class="nav-pool">High2 <span class="nav-count">3</span></a><a href="#ip-pool-7" class="nav-pool">Kit Internal <span class="nav-count">60</span></a><a href="#ip-pool-8" class="nav-pool">account-694562 <span class="nav-count">1</span></a><a href="#ip-pool-9" class="nav-pool">Unlabeled <span class="nav-count">10</span></a><a href="#ip-pool-10" class="nav-pool">account-396043 <span class="nav-count">1</span></a><a href="#ip-pool-11" class="nav-pool">account-24707 <span class="nav-count">2</span></a><a href="#ip-pool-12" class="nav-pool">account-1584520 <span class="nav-count">1</span></a><a href="#ip-pool-13" class="nav-pool">account-146220 <span class="nav-count">1</span></a><a href="#ip-pool-14" class="nav-pool">Medium2 <span class="nav-count">2</span></a><a href="#ip-pool-15" class="nav-pool">account-1094 <span class="nav-count">1</span></a><a href="#ip-pool-16" class="nav-pool">account-1895907 <span class="nav-count">1</span></a><a href="#ip-pool-17" class="nav-pool">account-1812252 <span class="nav-count">1</span></a><a href="#ip-pool-18" class="nav-pool">account-1165486 <span class="nav-count">1</span></a><a href="#ip-pool-19" class="nav-pool">account-2318453 <span class="nav-count">1</span></a>
+    <span class="pool-nav-label">POOLS:</span>
+    <button class="nav-pool" data-pool="Tim Ferriss" onclick="togglePoolFilter(this, 'ip')">Tim Ferriss <span class="nav-count">1</span></button><button class="nav-pool" data-pool="Test" onclick="togglePoolFilter(this, 'ip')">Test <span class="nav-count">1</span></button><button class="nav-pool" data-pool="No2" onclick="togglePoolFilter(this, 'ip')">No2 <span class="nav-count">10</span></button><button class="nav-pool" data-pool="No" onclick="togglePoolFilter(this, 'ip')">No <span class="nav-count">6</span></button><button class="nav-pool" data-pool="Medium" onclick="togglePoolFilter(this, 'ip')">Medium <span class="nav-count">11</span></button><button class="nav-pool" data-pool="Low" onclick="togglePoolFilter(this, 'ip')">Low <span class="nav-count">5</span></button><button class="nav-pool" data-pool="High2" onclick="togglePoolFilter(this, 'ip')">High2 <span class="nav-count">3</span></button><button class="nav-pool" data-pool="Kit Internal" onclick="togglePoolFilter(this, 'ip')">Kit Internal <span class="nav-count">60</span></button><button class="nav-pool" data-pool="account-694562" onclick="togglePoolFilter(this, 'ip')">account-694562 <span class="nav-count">1</span></button><button class="nav-pool" data-pool="" onclick="togglePoolFilter(this, 'ip')">Unlabeled <span class="nav-count">10</span></button><button class="nav-pool" data-pool="account-396043" onclick="togglePoolFilter(this, 'ip')">account-396043 <span class="nav-count">1</span></button><button class="nav-pool" data-pool="account-24707" onclick="togglePoolFilter(this, 'ip')">account-24707 <span class="nav-count">2</span></button><button class="nav-pool" data-pool="account-1584520" onclick="togglePoolFilter(this, 'ip')">account-1584520 <span class="nav-count">1</span></button><button class="nav-pool" data-pool="account-146220" onclick="togglePoolFilter(this, 'ip')">account-146220 <span class="nav-count">1</span></button><button class="nav-pool" data-pool="Medium2" onclick="togglePoolFilter(this, 'ip')">Medium2 <span class="nav-count">2</span></button><button class="nav-pool" data-pool="account-1094" onclick="togglePoolFilter(this, 'ip')">account-1094 <span class="nav-count">1</span></button><button class="nav-pool" data-pool="account-1895907" onclick="togglePoolFilter(this, 'ip')">account-1895907 <span class="nav-count">1</span></button><button class="nav-pool" data-pool="account-1812252" onclick="togglePoolFilter(this, 'ip')">account-1812252 <span class="nav-count">1</span></button><button class="nav-pool" data-pool="account-1165486" onclick="togglePoolFilter(this, 'ip')">account-1165486 <span class="nav-count">1</span></button><button class="nav-pool" data-pool="account-2318453" onclick="togglePoolFilter(this, 'ip')">account-2318453 <span class="nav-count">1</span></button>
+    <button class="nav-pool nav-pool-clear" id="ip-pool-clear" onclick="clearPoolFilter('ip')" style="display:none">✕ Clear</button>
   </div>
   <div class="content">
     
@@ -1755,8 +1764,8 @@
     </div>
   </div>
   <div class="ip-meta">
-    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">SendGrid, Inc.</span></div>
-    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Denver, Colorado, United States</span></div>
+    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">Unknown</span></div>
+    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Unknown, Unknown, Unknown</span></div>
     <div class="meta-item"><span class="meta-key">DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 9 clean &nbsp;·&nbsp; 9 total</span></div>
   </div>
   
@@ -2324,8 +2333,8 @@
     </div>
   </div>
   <div class="ip-meta">
-    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">SendGrid, Inc.</span></div>
-    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Denver, Colorado, United States</span></div>
+    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">Unknown</span></div>
+    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Unknown, Unknown, Unknown</span></div>
     <div class="meta-item"><span class="meta-key">DNSBL</span><span class="meta-val">1 listed &nbsp;·&nbsp; 8 clean &nbsp;·&nbsp; 9 total</span></div>
   </div>
   <div class="listing-alert"><strong>⚠ Active DNSBL Listings (1)</strong><ul><li><span class="bl-name">SpamCop</span> <span class="bl-cat">(SpamCop)</span> — <code>127.0.0.2</code></li></ul></div>
@@ -2406,8 +2415,8 @@
     </div>
   </div>
   <div class="ip-meta">
-    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">SendGrid, Inc.</span></div>
-    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Denver, Colorado, United States</span></div>
+    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">Unknown</span></div>
+    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Unknown, Unknown, Unknown</span></div>
     <div class="meta-item"><span class="meta-key">DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 9 clean &nbsp;·&nbsp; 9 total</span></div>
   </div>
   
@@ -2447,8 +2456,8 @@
     </div>
   </div>
   <div class="ip-meta">
-    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">SendGrid, Inc.</span></div>
-    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Denver, Colorado, United States</span></div>
+    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">Unknown</span></div>
+    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Unknown, Unknown, Unknown</span></div>
     <div class="meta-item"><span class="meta-key">DNSBL</span><span class="meta-val">1 listed &nbsp;·&nbsp; 8 clean &nbsp;·&nbsp; 9 total</span></div>
   </div>
   <div class="listing-alert"><strong>⚠ Active DNSBL Listings (1)</strong><ul><li><span class="bl-name">SpamCop</span> <span class="bl-cat">(SpamCop)</span> — <code>127.0.0.2</code></li></ul></div>
@@ -2488,8 +2497,8 @@
     </div>
   </div>
   <div class="ip-meta">
-    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">SendGrid, Inc.</span></div>
-    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Denver, Colorado, United States</span></div>
+    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">Unknown</span></div>
+    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Unknown, Unknown, Unknown</span></div>
     <div class="meta-item"><span class="meta-key">DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 9 clean &nbsp;·&nbsp; 9 total</span></div>
   </div>
   
@@ -2529,8 +2538,8 @@
     </div>
   </div>
   <div class="ip-meta">
-    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">SendGrid, Inc.</span></div>
-    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Denver, Colorado, United States</span></div>
+    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">Unknown</span></div>
+    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Unknown, Unknown, Unknown</span></div>
     <div class="meta-item"><span class="meta-key">DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 9 clean &nbsp;·&nbsp; 9 total</span></div>
   </div>
   
@@ -2588,8 +2597,8 @@
     </div>
   </div>
   <div class="ip-meta">
-    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">SendGrid, Inc.</span></div>
-    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Denver, Colorado, United States</span></div>
+    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">Unknown</span></div>
+    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Unknown, Unknown, Unknown</span></div>
     <div class="meta-item"><span class="meta-key">DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 9 clean &nbsp;·&nbsp; 9 total</span></div>
   </div>
   
@@ -2629,8 +2638,8 @@
     </div>
   </div>
   <div class="ip-meta">
-    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">SendGrid, Inc.</span></div>
-    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Denver, Colorado, United States</span></div>
+    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">Unknown</span></div>
+    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Unknown, Unknown, Unknown</span></div>
     <div class="meta-item"><span class="meta-key">DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 9 clean &nbsp;·&nbsp; 9 total</span></div>
   </div>
   
@@ -2670,8 +2679,8 @@
     </div>
   </div>
   <div class="ip-meta">
-    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">SendGrid, Inc.</span></div>
-    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Denver, Colorado, United States</span></div>
+    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">Unknown</span></div>
+    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Unknown, Unknown, Unknown</span></div>
     <div class="meta-item"><span class="meta-key">DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 9 clean &nbsp;·&nbsp; 9 total</span></div>
   </div>
   
@@ -2711,8 +2720,8 @@
     </div>
   </div>
   <div class="ip-meta">
-    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">SendGrid, Inc.</span></div>
-    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Denver, Colorado, United States</span></div>
+    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">Unknown</span></div>
+    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Unknown, Unknown, Unknown</span></div>
     <div class="meta-item"><span class="meta-key">DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 9 clean &nbsp;·&nbsp; 9 total</span></div>
   </div>
   
@@ -2752,8 +2761,8 @@
     </div>
   </div>
   <div class="ip-meta">
-    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">Twilio SendGrid</span></div>
-    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">San Francisco, California, United States</span></div>
+    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">Unknown</span></div>
+    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Unknown, Unknown, Unknown</span></div>
     <div class="meta-item"><span class="meta-key">DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 9 clean &nbsp;·&nbsp; 9 total</span></div>
   </div>
   
@@ -2811,8 +2820,8 @@
     </div>
   </div>
   <div class="ip-meta">
-    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">SendGrid, Inc.</span></div>
-    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Denver, Colorado, United States</span></div>
+    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">Unknown</span></div>
+    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Unknown, Unknown, Unknown</span></div>
     <div class="meta-item"><span class="meta-key">DNSBL</span><span class="meta-val">1 listed &nbsp;·&nbsp; 8 clean &nbsp;·&nbsp; 9 total</span></div>
   </div>
   <div class="listing-alert"><strong>⚠ Active DNSBL Listings (1)</strong><ul><li><span class="bl-name">SpamCop</span> <span class="bl-cat">(SpamCop)</span> — <code>127.0.0.2</code></li></ul></div>
@@ -2852,8 +2861,8 @@
     </div>
   </div>
   <div class="ip-meta">
-    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">SendGrid, Inc.</span></div>
-    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Denver, Colorado, United States</span></div>
+    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">Unknown</span></div>
+    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Unknown, Unknown, Unknown</span></div>
     <div class="meta-item"><span class="meta-key">DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 9 clean &nbsp;·&nbsp; 9 total</span></div>
   </div>
   
@@ -2893,8 +2902,8 @@
     </div>
   </div>
   <div class="ip-meta">
-    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">SendGrid, Inc.</span></div>
-    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Denver, Colorado, United States</span></div>
+    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">Unknown</span></div>
+    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Unknown, Unknown, Unknown</span></div>
     <div class="meta-item"><span class="meta-key">DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 9 clean &nbsp;·&nbsp; 9 total</span></div>
   </div>
   
@@ -2952,8 +2961,8 @@
     </div>
   </div>
   <div class="ip-meta">
-    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">Kit, Inc</span></div>
-    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Boise, Idaho, United States</span></div>
+    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">Unknown</span></div>
+    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Unknown, Unknown, Unknown</span></div>
     <div class="meta-item"><span class="meta-key">DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 9 clean &nbsp;·&nbsp; 9 total</span></div>
   </div>
   
@@ -3012,8 +3021,8 @@
     </div>
   </div>
   <div class="ip-meta">
-    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">Kit, Inc</span></div>
-    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Boise, Idaho, United States</span></div>
+    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">Unknown</span></div>
+    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Unknown, Unknown, Unknown</span></div>
     <div class="meta-item"><span class="meta-key">DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 9 clean &nbsp;·&nbsp; 9 total</span></div>
   </div>
   
@@ -3061,8 +3070,8 @@
     </div>
   </div>
   <div class="ip-meta">
-    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">Kit, Inc</span></div>
-    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Boise, Idaho, United States</span></div>
+    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">Unknown</span></div>
+    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Unknown, Unknown, Unknown</span></div>
     <div class="meta-item"><span class="meta-key">DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 9 clean &nbsp;·&nbsp; 9 total</span></div>
   </div>
   
@@ -3257,8 +3266,8 @@
     </div>
   </div>
   <div class="ip-meta">
-    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">Unknown</span></div>
-    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Unknown, Unknown, Unknown</span></div>
+    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">Kit, Inc</span></div>
+    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Boise, Idaho, United States</span></div>
     <div class="meta-item"><span class="meta-key">DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 9 clean &nbsp;·&nbsp; 9 total</span></div>
   </div>
   
@@ -3306,8 +3315,8 @@
     </div>
   </div>
   <div class="ip-meta">
-    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">Unknown</span></div>
-    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Unknown, Unknown, Unknown</span></div>
+    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">Kit, Inc</span></div>
+    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Boise, Idaho, United States</span></div>
     <div class="meta-item"><span class="meta-key">DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 9 clean &nbsp;·&nbsp; 9 total</span></div>
   </div>
   
@@ -3404,8 +3413,8 @@
     </div>
   </div>
   <div class="ip-meta">
-    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">Unknown</span></div>
-    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Unknown, Unknown, Unknown</span></div>
+    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">Kit, Inc</span></div>
+    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Boise, Idaho, United States</span></div>
     <div class="meta-item"><span class="meta-key">DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 9 clean &nbsp;·&nbsp; 9 total</span></div>
   </div>
   
@@ -3453,8 +3462,8 @@
     </div>
   </div>
   <div class="ip-meta">
-    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">Unknown</span></div>
-    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Unknown, Unknown, Unknown</span></div>
+    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">Kit, Inc</span></div>
+    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Boise, Idaho, United States</span></div>
     <div class="meta-item"><span class="meta-key">DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 9 clean &nbsp;·&nbsp; 9 total</span></div>
   </div>
   
@@ -3502,8 +3511,8 @@
     </div>
   </div>
   <div class="ip-meta">
-    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">Unknown</span></div>
-    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Unknown, Unknown, Unknown</span></div>
+    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">Kit, Inc</span></div>
+    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Boise, Idaho, United States</span></div>
     <div class="meta-item"><span class="meta-key">DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 9 clean &nbsp;·&nbsp; 9 total</span></div>
   </div>
   
@@ -3551,8 +3560,8 @@
     </div>
   </div>
   <div class="ip-meta">
-    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">Unknown</span></div>
-    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Unknown, Unknown, Unknown</span></div>
+    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">Kit, Inc</span></div>
+    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Boise, Idaho, United States</span></div>
     <div class="meta-item"><span class="meta-key">DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 9 clean &nbsp;·&nbsp; 9 total</span></div>
   </div>
   
@@ -3600,8 +3609,8 @@
     </div>
   </div>
   <div class="ip-meta">
-    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">Unknown</span></div>
-    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Unknown, Unknown, Unknown</span></div>
+    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">Kit, Inc</span></div>
+    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Boise, Idaho, United States</span></div>
     <div class="meta-item"><span class="meta-key">DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 9 clean &nbsp;·&nbsp; 9 total</span></div>
   </div>
   
@@ -3698,8 +3707,8 @@
     </div>
   </div>
   <div class="ip-meta">
-    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">Unknown</span></div>
-    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Unknown, Unknown, Unknown</span></div>
+    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">Kit, Inc</span></div>
+    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Boise, Idaho, United States</span></div>
     <div class="meta-item"><span class="meta-key">DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 9 clean &nbsp;·&nbsp; 9 total</span></div>
   </div>
   
@@ -3747,8 +3756,8 @@
     </div>
   </div>
   <div class="ip-meta">
-    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">Unknown</span></div>
-    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Unknown, Unknown, Unknown</span></div>
+    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">Kit, Inc</span></div>
+    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Boise, Idaho, United States</span></div>
     <div class="meta-item"><span class="meta-key">DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 9 clean &nbsp;·&nbsp; 9 total</span></div>
   </div>
   
@@ -3796,8 +3805,8 @@
     </div>
   </div>
   <div class="ip-meta">
-    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">Unknown</span></div>
-    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Unknown, Unknown, Unknown</span></div>
+    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">Kit, Inc</span></div>
+    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Boise, Idaho, United States</span></div>
     <div class="meta-item"><span class="meta-key">DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 9 clean &nbsp;·&nbsp; 9 total</span></div>
   </div>
   
@@ -3845,8 +3854,8 @@
     </div>
   </div>
   <div class="ip-meta">
-    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">Unknown</span></div>
-    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Unknown, Unknown, Unknown</span></div>
+    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">Kit, Inc</span></div>
+    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Boise, Idaho, United States</span></div>
     <div class="meta-item"><span class="meta-key">DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 9 clean &nbsp;·&nbsp; 9 total</span></div>
   </div>
   
@@ -3894,8 +3903,8 @@
     </div>
   </div>
   <div class="ip-meta">
-    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">Unknown</span></div>
-    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Unknown, Unknown, Unknown</span></div>
+    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">Kit, Inc</span></div>
+    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Boise, Idaho, United States</span></div>
     <div class="meta-item"><span class="meta-key">DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 9 clean &nbsp;·&nbsp; 9 total</span></div>
   </div>
   
@@ -3943,8 +3952,8 @@
     </div>
   </div>
   <div class="ip-meta">
-    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">Unknown</span></div>
-    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Unknown, Unknown, Unknown</span></div>
+    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">Kit, Inc</span></div>
+    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Boise, Idaho, United States</span></div>
     <div class="meta-item"><span class="meta-key">DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 9 clean &nbsp;·&nbsp; 9 total</span></div>
   </div>
   
@@ -3992,8 +4001,8 @@
     </div>
   </div>
   <div class="ip-meta">
-    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">Unknown</span></div>
-    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Unknown, Unknown, Unknown</span></div>
+    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">Kit, Inc</span></div>
+    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Boise, Idaho, United States</span></div>
     <div class="meta-item"><span class="meta-key">DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 9 clean &nbsp;·&nbsp; 9 total</span></div>
   </div>
   
@@ -4041,8 +4050,8 @@
     </div>
   </div>
   <div class="ip-meta">
-    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">Unknown</span></div>
-    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Unknown, Unknown, Unknown</span></div>
+    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">Kit, Inc</span></div>
+    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Boise, Idaho, United States</span></div>
     <div class="meta-item"><span class="meta-key">DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 9 clean &nbsp;·&nbsp; 9 total</span></div>
   </div>
   
@@ -4090,8 +4099,8 @@
     </div>
   </div>
   <div class="ip-meta">
-    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">Unknown</span></div>
-    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Unknown, Unknown, Unknown</span></div>
+    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">Kit, Inc</span></div>
+    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Boise, Idaho, United States</span></div>
     <div class="meta-item"><span class="meta-key">DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 9 clean &nbsp;·&nbsp; 9 total</span></div>
   </div>
   
@@ -4139,8 +4148,8 @@
     </div>
   </div>
   <div class="ip-meta">
-    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">Unknown</span></div>
-    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Unknown, Unknown, Unknown</span></div>
+    <div class="meta-item"><span class="meta-key">ISP / Org</span><span class="meta-val">Kit, Inc</span></div>
+    <div class="meta-item"><span class="meta-key">Location</span><span class="meta-val">Boise, Idaho, United States</span></div>
     <div class="meta-item"><span class="meta-key">DNSBL</span><span class="meta-val">0 listed &nbsp;·&nbsp; 9 clean &nbsp;·&nbsp; 9 total</span></div>
   </div>
   
@@ -7129,6 +7138,14 @@
 
 <script>
   let _activeStatus = '';
+  // Per-tab pool filter state: maps tab name ('ip'/'domain') → Set of active pool labels
+  const _activePools = { ip: new Set(), domain: new Set() };
+
+  function _currentTab() {
+    const panel = document.querySelector('.tab-panel.active');
+    if (!panel) return '';
+    return panel.id === 'tab-ips' ? 'ip' : 'domain';
+  }
 
   function switchTab(name, btn) {
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
@@ -7146,10 +7163,33 @@
     if (searchEl) searchEl.value = '';
     const countEl = document.getElementById('filter-count');
     if (countEl) countEl.textContent = '';
-    // Show all cards in new tab
     document.querySelectorAll('[data-resource]').forEach(c => c.style.display = '');
     document.querySelectorAll('.pool-section').forEach(p => p.style.display = '');
     window.scrollTo({top: 0, behavior: 'smooth'});
+  }
+
+  function togglePoolFilter(btn, tabKey) {
+    const pool  = btn.dataset.pool;
+    const pools = _activePools[tabKey];
+    if (pools.has(pool)) {
+      pools.delete(pool);
+      btn.classList.remove('active');
+    } else {
+      pools.add(pool);
+      btn.classList.add('active');
+    }
+    const clearBtn = document.getElementById(tabKey + '-pool-clear');
+    if (clearBtn) clearBtn.style.display = pools.size > 0 ? '' : 'none';
+    applyFilter();
+  }
+
+  function clearPoolFilter(tabKey) {
+    _activePools[tabKey].clear();
+    const panel = document.getElementById('tab-' + (tabKey === 'ip' ? 'ips' : 'domains'));
+    if (panel) panel.querySelectorAll('.nav-pool').forEach(b => b.classList.remove('active'));
+    const clearBtn = document.getElementById(tabKey + '-pool-clear');
+    if (clearBtn) clearBtn.style.display = 'none';
+    applyFilter();
   }
 
   function setStatusFilter(btn) {
@@ -7160,9 +7200,11 @@
   }
 
   function applyFilter() {
-    const search = (document.getElementById('filter-search').value || '').toLowerCase().trim();
+    const search   = (document.getElementById('filter-search').value || '').toLowerCase().trim();
     const activeTab = document.querySelector('.tab-panel.active');
     if (!activeTab || activeTab.id === 'tab-history') return;
+    const tabKey   = activeTab.id === 'tab-ips' ? 'ip' : 'domain';
+    const pools    = _activePools[tabKey];
     let visible = 0, total = 0;
     activeTab.querySelectorAll('[data-resource]').forEach(card => {
       total++;
@@ -7170,7 +7212,8 @@
       const matchSearch = !search ||
         card.dataset.resource.toLowerCase().includes(search) ||
         (card.dataset.label || '').toLowerCase().includes(search);
-      const show = matchStatus && matchSearch;
+      const matchPool   = pools.size === 0 || pools.has(card.dataset.label || '');
+      const show = matchStatus && matchSearch && matchPool;
       card.style.display = show ? '' : 'none';
       if (show) visible++;
     });
@@ -7179,9 +7222,18 @@
       pool.style.display = any ? '' : 'none';
     });
     const countEl = document.getElementById('filter-count');
-    if (countEl) countEl.textContent = (search || _activeStatus) ? `${visible} / ${total} shown` : '';
+    const isFiltered = search || _activeStatus || _activePools[tabKey].size > 0;
+    if (countEl) countEl.textContent = isFiltered ? `${visible} / ${total} shown` : '';
   }
+
+  // Back-to-top button visibility
+  window.addEventListener('scroll', function() {
+    const btn = document.getElementById('back-to-top');
+    if (btn) btn.classList.toggle('visible', window.scrollY > 500);
+  });
 </script>
+
+<button id="back-to-top" title="Back to top" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
 
 <div class="footer">
   IP &amp; Domain Reputation Checker &nbsp;·&nbsp; DNSBL/SURBL/URIBL + Google Safe Browsing + ip-api.com
